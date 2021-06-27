@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>JCVI pipline | Sen</title>
+<meta name="keywords" content="" />
+<meta name="description" content="Prepare input data 准备输入文件  GFF cds  Format 对输入文件进行统一的格式化 convert GFF to BED 将GFF格式转换成BED格式 python3 -m jcvi.formats.gff bed --type=mRNA --key=Parent JamaicanLionDASH.gene.gff3.gz -o CsJLD.bed  formatting cds sequences python3 -m jcvi.formats.fasta format JamaicanLionDASH.cds.fasta.gz CsJLD.cds  Pairwise synteny search 搜索共线性对 python3 -m jcvi.compara.catalog ortholog CsFN CsPK --no_strip_names  此步骤会调用LAST以CsPK为subject建库,以CsFN为query做blastp。结果文件中.last是比对的全部结果，.last.filtered是过滤后的结果，但过滤的规则尚不清楚。同时生成的.anchors和.lifted.anchors文件格式尚不清楚。生成的.pdf文件绘制了CsFN和CsPK的共线性点图。
+ 若杂点太多可以通过添加--cscore=.99参数修改last的C-score过滤阈值，在此之前需删除旧的.last.filtered文件。
+ Macrosynteny visualization 宏观共线性可视化 seqids and layout chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8 Pp01,Pp02,Pp03,Pp04,Pp05,Pp06,Pp07,Pp08  seqids文件是CsFN和CsPK中需要展示的染色体编号，编号的排列顺序与结果文件中染色体的排列顺序一致
+ 两个个体之间的染色体编号若有重复，可能导致在微观共线性可视化时产生错误。
+ # y, xstart, xend, rotation, color, label, va, bed .">
+<meta name="author" content="">
+<link rel="canonical" href="https://caiisen.github.io/posts/my-first-post/" />
+<link crossorigin="anonymous" href="/assets/css/stylesheet.min.fe63ae84f306727c713665eb03a6c71ec6c611434c8182ba17ba7e7d26a979e9.css" integrity="sha256-/mOuhPMGcnxxNmXrA6bHHsbGEUNMgYK6F7p&#43;fSapeek=" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.min.7680afc38aa6b15ddf158a4f3780b7b1f7dde7e91d26f073e6229bb7a0793c92.js" integrity="sha256-doCvw4qmsV3fFYpPN4C3sffd5&#43;kdJvBz5iKbt6B5PJI="
+    onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="https://caiisen.github.io/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://caiisen.github.io/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://caiisen.github.io/favicon-32x32.png">
+<link rel="apple-touch-icon" href="https://caiisen.github.io/apple-touch-icon.png">
+<link rel="mask-icon" href="https://caiisen.github.io/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<meta name="generator" content="Hugo 0.82.1" />
+<meta property="og:title" content="JCVI pipline" />
+<meta property="og:description" content="Prepare input data 准备输入文件  GFF cds  Format 对输入文件进行统一的格式化 convert GFF to BED 将GFF格式转换成BED格式 python3 -m jcvi.formats.gff bed --type=mRNA --key=Parent JamaicanLionDASH.gene.gff3.gz -o CsJLD.bed  formatting cds sequences python3 -m jcvi.formats.fasta format JamaicanLionDASH.cds.fasta.gz CsJLD.cds  Pairwise synteny search 搜索共线性对 python3 -m jcvi.compara.catalog ortholog CsFN CsPK --no_strip_names  此步骤会调用LAST以CsPK为subject建库,以CsFN为query做blastp。结果文件中.last是比对的全部结果，.last.filtered是过滤后的结果，但过滤的规则尚不清楚。同时生成的.anchors和.lifted.anchors文件格式尚不清楚。生成的.pdf文件绘制了CsFN和CsPK的共线性点图。
+ 若杂点太多可以通过添加--cscore=.99参数修改last的C-score过滤阈值，在此之前需删除旧的.last.filtered文件。
+ Macrosynteny visualization 宏观共线性可视化 seqids and layout chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8 Pp01,Pp02,Pp03,Pp04,Pp05,Pp06,Pp07,Pp08  seqids文件是CsFN和CsPK中需要展示的染色体编号，编号的排列顺序与结果文件中染色体的排列顺序一致
+ 两个个体之间的染色体编号若有重复，可能导致在微观共线性可视化时产生错误。
+ # y, xstart, xend, rotation, color, label, va, bed ." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://caiisen.github.io/posts/my-first-post/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2021-06-27T20:19:00&#43;08:00" />
+<meta property="article:modified_time" content="2021-06-27T20:19:00&#43;08:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="JCVI pipline"/>
+<meta name="twitter:description" content="Prepare input data 准备输入文件  GFF cds  Format 对输入文件进行统一的格式化 convert GFF to BED 将GFF格式转换成BED格式 python3 -m jcvi.formats.gff bed --type=mRNA --key=Parent JamaicanLionDASH.gene.gff3.gz -o CsJLD.bed  formatting cds sequences python3 -m jcvi.formats.fasta format JamaicanLionDASH.cds.fasta.gz CsJLD.cds  Pairwise synteny search 搜索共线性对 python3 -m jcvi.compara.catalog ortholog CsFN CsPK --no_strip_names  此步骤会调用LAST以CsPK为subject建库,以CsFN为query做blastp。结果文件中.last是比对的全部结果，.last.filtered是过滤后的结果，但过滤的规则尚不清楚。同时生成的.anchors和.lifted.anchors文件格式尚不清楚。生成的.pdf文件绘制了CsFN和CsPK的共线性点图。
+ 若杂点太多可以通过添加--cscore=.99参数修改last的C-score过滤阈值，在此之前需删除旧的.last.filtered文件。
+ Macrosynteny visualization 宏观共线性可视化 seqids and layout chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8 Pp01,Pp02,Pp03,Pp04,Pp05,Pp06,Pp07,Pp08  seqids文件是CsFN和CsPK中需要展示的染色体编号，编号的排列顺序与结果文件中染色体的排列顺序一致
+ 两个个体之间的染色体编号若有重复，可能导致在微观共线性可视化时产生错误。
+ # y, xstart, xend, rotation, color, label, va, bed ."/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "https://caiisen.github.io/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "JCVI pipline",
+      "item": "https://caiisen.github.io/posts/my-first-post/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "JCVI pipline",
+  "name": "JCVI pipline",
+  "description": "Prepare input data 准备输入文件  GFF cds  Format 对输入文件进行统一的格式化 convert GFF to BED 将GFF格式转换成BED格式 python3 -m jcvi.formats.gff bed --type=mRNA --key=Parent JamaicanLionDASH.gene.gff3.gz -o CsJLD.bed  formatting cds sequences python3 -m jcvi.formats.fasta format JamaicanLionDASH.cds.fasta.gz CsJLD.cds  Pairwise synteny search 搜索共线性对 python3 -m jcvi.compara.catalog ortholog CsFN CsPK --no_strip_names  此步骤会调用LAST以CsPK为subject建库,以CsFN为query做blastp。结果文件中.last是比对的全部结果，.last.filtered是过滤后的结果，但过滤的规则尚不清楚。同时生成的.anchors和.lifted.anchors文件格式尚不清楚。生成的.pdf文件绘制了CsFN和CsPK的共线性点图。\n 若杂点太多可以通过添加--cscore=.99参数修改last的C-score过滤阈值，在此之前需删除旧的.last.filtered文件。\n Macrosynteny visualization 宏观共线性可视化 seqids and layout chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8 Pp01,Pp02,Pp03,Pp04,Pp05,Pp06,Pp07,Pp08  seqids文件是CsFN和CsPK中需要展示的染色体编号，编号的排列顺序与结果文件中染色体的排列顺序一致\n 两个个体之间的染色体编号若有重复，可能导致在微观共线性可视化时产生错误。\n # y, xstart, xend, rotation, color, label, va, bed .",
+  "keywords": [
+    
+  ],
+  "articleBody": "Prepare input data 准备输入文件  GFF cds  Format 对输入文件进行统一的格式化 convert GFF to BED 将GFF格式转换成BED格式 python3 -m jcvi.formats.gff bed --type=mRNA --key=Parent JamaicanLionDASH.gene.gff3.gz -o CsJLD.bed  formatting cds sequences python3 -m jcvi.formats.fasta format JamaicanLionDASH.cds.fasta.gz CsJLD.cds  Pairwise synteny search 搜索共线性对 python3 -m jcvi.compara.catalog ortholog CsFN CsPK --no_strip_names  此步骤会调用LAST以CsPK为subject建库,以CsFN为query做blastp。结果文件中.last是比对的全部结果，.last.filtered是过滤后的结果，但过滤的规则尚不清楚。同时生成的.anchors和.lifted.anchors文件格式尚不清楚。生成的.pdf文件绘制了CsFN和CsPK的共线性点图。\n 若杂点太多可以通过添加--cscore=.99参数修改last的C-score过滤阈值，在此之前需删除旧的.last.filtered文件。\n Macrosynteny visualization 宏观共线性可视化 seqids and layout chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8 Pp01,Pp02,Pp03,Pp04,Pp05,Pp06,Pp07,Pp08  seqids文件是CsFN和CsPK中需要展示的染色体编号，编号的排列顺序与结果文件中染色体的排列顺序一致\n 两个个体之间的染色体编号若有重复，可能导致在微观共线性可视化时产生错误。\n # y, xstart, xend, rotation, color, label, va, bed .6, .1, .8, 0, , Grape, top, grape.bed .4, .1, .8, 0, , Peach, top, peach.bed # edges e, 0, 1, grape.peach.anchors.simple  layout文件主要存放一些绘图参数。\n上半部分说明需要绘制的个体分别是那些，其中y是在纵轴方向上的位置，xstart和xend是在横轴方向上的起始和终止位置，rotation表示旋转的角度，label为在图中标注的名称，va为染色体编号相较染色体的位置，bed是个体的BED文件。color表示显示的颜色，但填写的参数与实际显示结果之间的联系尚不清楚。\n下半部分说明连接个体之间线段的依赖文件。e可能为edge的缩写，其后的两个由逗号分隔的数字m, n表示根据.anchors.simple文件的结果将上半部分的第m行与第n行联系起来。\n.simple python3 -m jcvi.compara.synteny screen --minspan=20 --simple CsFN.CsPK.anchors CsFN.CsPK.anchors.new  .simple是在.anchors的基础上进一步简化(more succince) 的一个文件\n 生成.simple文件时有若干参数可以调整保留下来基因对(gene pairs) 的数量，已知的有例中的--minspan和--minsize。\n plot python3 -m jcvi.graphics.karyotype CsCBD.CsPK.seqids CsCBD.CsPK.layout  Microsynteny visualization 微观共线性可视化 .blocks python3 -m jcvi.compara.synteny mcscan CsFN.bed CsFN.CsPK.lifted.anchors --iter=2 -o CsFN.CsPK.i2.blocks  plot python3 -m jcvi.graphics.synteny CsFN.CsPK.i2.order.blocks CsFN_CsPK.bed CsFN.CsPK.i2.order.blocks.layout  ",
+  "wordCount" : "130",
+  "inLanguage": "en",
+  "datePublished": "2021-06-27T20:19:00+08:00",
+  "dateModified": "2021-06-27T20:19:00+08:00",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://caiisen.github.io/posts/my-first-post/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Sen",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://caiisen.github.io/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+<noscript>
+    <style type="text/css">
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: #1d1e20;
+                --entry: #2e2e33;
+                --primary: rgba(255, 255, 255, 0.84);
+                --secondary: rgba(255, 255, 255, 0.56);
+                --tertiary: rgba(255, 255, 255, 0.16);
+                --content: rgba(255, 255, 255, 0.74);
+                --hljs-bg: #2e2e33;
+                --code-bg: #37383e;
+                --border: #333;
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://caiisen.github.io/" accesskey="h" title="Sen (Alt + H)">Sen</a>
+            <span class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </span>
+        </div>
+        <ul id="menu">
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title">
+      JCVI pipline
+    </h1>
+    <div class="post-meta">June 27, 2021
+</div>
+  </header> 
+  <div class="post-content"><h2 id="prepare-input-data-准备输入文件">Prepare input data 准备输入文件<a hidden class="anchor" aria-hidden="true" href="#prepare-input-data-准备输入文件">#</a></h2>
+<ol>
+<li>GFF</li>
+<li>cds</li>
+</ol>
+<h2 id="format-对输入文件进行统一的格式化">Format 对输入文件进行统一的格式化<a hidden class="anchor" aria-hidden="true" href="#format-对输入文件进行统一的格式化">#</a></h2>
+<h4 id="convert-gff-to-bed-将gff格式转换成bed格式">convert GFF to BED 将GFF格式转换成BED格式<a hidden class="anchor" aria-hidden="true" href="#convert-gff-to-bed-将gff格式转换成bed格式">#</a></h4>
+<pre><code>python3 -m jcvi.formats.gff bed --type=mRNA --key=Parent JamaicanLionDASH.gene.gff3.gz -o CsJLD.bed
+</code></pre>
+<h4 id="formatting-cds-sequences">formatting cds sequences<a hidden class="anchor" aria-hidden="true" href="#formatting-cds-sequences">#</a></h4>
+<pre><code>python3 -m jcvi.formats.fasta format JamaicanLionDASH.cds.fasta.gz CsJLD.cds
+</code></pre>
+<h2 id="pairwise-synteny-search-搜索共线性对">Pairwise synteny search 搜索共线性对<a hidden class="anchor" aria-hidden="true" href="#pairwise-synteny-search-搜索共线性对">#</a></h2>
+<pre><code>python3 -m jcvi.compara.catalog ortholog CsFN CsPK --no_strip_names
+</code></pre>
+<p>此步骤会调用<a href="https://gitlab.com/mcfrith/last">LAST</a>以CsPK为subject建库,以CsFN为query做blastp。结果文件中<code>.last</code>是比对的全部结果，<code>.last.filtered</code>是过滤后的结果，但过滤的规则尚不清楚。同时生成的<code>.anchors</code>和<code>.lifted.anchors</code>文件格式尚不清楚。生成的<code>.pdf</code>文件绘制了CsFN和CsPK的共线性点图。</p>
+<blockquote>
+<p>若杂点太多可以通过添加<code>--cscore=.99</code>参数修改last的C-score过滤阈值，在此之前需删除旧的<code>.last.filtered</code>文件。</p>
+</blockquote>
+<h2 id="macrosynteny-visualization-宏观共线性可视化">Macrosynteny visualization 宏观共线性可视化<a hidden class="anchor" aria-hidden="true" href="#macrosynteny-visualization-宏观共线性可视化">#</a></h2>
+<h4 id="seqids-and-layout"><code>seqids</code> and <code>layout</code><a hidden class="anchor" aria-hidden="true" href="#seqids-and-layout">#</a></h4>
+<pre><code>chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8
+Pp01,Pp02,Pp03,Pp04,Pp05,Pp06,Pp07,Pp08
+</code></pre>
+<p><code>seqids</code>文件是CsFN和CsPK中需要展示的染色体编号，编号的排列顺序与结果文件中染色体的排列顺序一致</p>
+<blockquote>
+<p>两个个体之间的染色体编号若有重复，可能导致在微观共线性可视化时产生错误。</p>
+</blockquote>
+<pre><code># y, xstart, xend, rotation, color, label, va,  bed
+.6,     .1,    .8,       0,      , Grape, top, grape.bed
+.4,     .1,    .8,       0,      , Peach, top, peach.bed
+# edges
+e, 0, 1, grape.peach.anchors.simple
+</code></pre>
+<p><code>layout</code>文件主要存放一些绘图参数。<br>
+上半部分说明需要绘制的个体分别是那些，其中<code>y</code>是在纵轴方向上的位置，<code>xstart</code>和<code>xend</code>是在横轴方向上的起始和终止位置，<code>rotation</code>表示旋转的角度，<code>label</code>为在图中标注的名称，<code>va</code>为染色体编号相较染色体的位置，<code>bed</code>是个体的BED文件。color表示显示的颜色，但填写的参数与实际显示结果之间的联系尚不清楚。<br>
+下半部分说明连接个体之间线段的依赖文件。<code>e</code>可能为edge的缩写，其后的两个由逗号分隔的数字m, n表示根据<code>.anchors.simple</code>文件的结果将上半部分的第m行与第n行联系起来。</p>
+<h4 id="simple"><code>.simple</code><a hidden class="anchor" aria-hidden="true" href="#simple">#</a></h4>
+<pre><code>python3 -m jcvi.compara.synteny screen --minspan=20 --simple CsFN.CsPK.anchors CsFN.CsPK.anchors.new
+</code></pre>
+<p><code>.simple</code>是在<code>.anchors</code>的基础上进一步简化(more succince) 的一个文件</p>
+<blockquote>
+<p>生成<code>.simple</code>文件时有若干参数可以调整保留下来基因对(gene pairs) 的数量，已知的有例中的<code>--minspan</code>和<code>--minsize</code>。</p>
+</blockquote>
+<h4 id="plot">plot<a hidden class="anchor" aria-hidden="true" href="#plot">#</a></h4>
+<pre><code>python3 -m jcvi.graphics.karyotype CsCBD.CsPK.seqids CsCBD.CsPK.layout
+</code></pre>
+<h2 id="microsynteny-visualization-微观共线性可视化">Microsynteny visualization 微观共线性可视化<a hidden class="anchor" aria-hidden="true" href="#microsynteny-visualization-微观共线性可视化">#</a></h2>
+<h4 id="blocks"><code>.blocks</code><a hidden class="anchor" aria-hidden="true" href="#blocks">#</a></h4>
+<pre><code>python3 -m jcvi.compara.synteny mcscan CsFN.bed CsFN.CsPK.lifted.anchors --iter=2 -o CsFN.CsPK.i2.blocks
+</code></pre>
+<h4 id="plot-1">plot<a hidden class="anchor" aria-hidden="true" href="#plot-1">#</a></h4>
+<pre><code>python3 -m jcvi.graphics.synteny CsFN.CsPK.i2.order.blocks CsFN_CsPK.bed CsFN.CsPK.i2.order.blocks.layout
+</code></pre>
+
+
+  </div>
+  <footer class="post-footer">
+  </footer>
+</article>
+    </main>
+    <footer class="footer">
+    <span>&copy; 2021 <a href="https://caiisen.github.io/">Sen</a></span>
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://git.io/hugopapermod" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)">
+    <button class="top-link" id="top-link" type="button" accesskey="g">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+            <path d="M12 6H0l6-6z" />
+        </svg>
+    </button>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+    menu.onscroll = function () {
+        localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>
