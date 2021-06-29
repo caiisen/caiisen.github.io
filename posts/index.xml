@@ -2,17 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>Posts on Sen</title>
-    <link>https://blog.caiisen.top/posts/</link>
+    <link>https://caiisen.github.io/posts/</link>
     <description>Recent content in Posts on Sen</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Mon, 28 Jun 2021 20:59:28 +0800</lastBuildDate><atom:link href="https://blog.caiisen.top/posts/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Mon, 28 Jun 2021 20:59:28 +0800</lastBuildDate><atom:link href="https://caiisen.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>搭建个人网站(一) Hugo</title>
-      <link>https://blog.caiisen.top/posts/build-site/</link>
+      <link>https://caiisen.github.io/posts/build-site/</link>
       <pubDate>Mon, 28 Jun 2021 20:59:28 +0800</pubDate>
       
-      <guid>https://blog.caiisen.top/posts/build-site/</guid>
+      <guid>https://caiisen.github.io/posts/build-site/</guid>
       <description>背景 前段时间开始了解并使用GitHub，看到大佬们自己在博客上分享帖子，很是羡慕，借此机会打算利用GitHub Pages来搭建一个个人网址。搭建的软件（暂且这么称呼吧）比较常见的有GitHub自己推荐的基于Ruby的Jekyll，Heko和基于GO的Hugo。简单尝试了Jekyll之后被复杂的配置方式劝退了，恰巧看到v站上关于Heko和Hugo的讨论，于是决定试一下Hugo（但还是要夸一下Heko优秀的中文文档），以下主要是记录流程，大部分都是参考网上现有的教程，但是找不到参考教程的网址了，实在抱歉，后面找到会再补充到文末。
 这个系列文章应该会分成三篇，第一篇介绍Hugo的安装与使用，第二篇介绍GitHub Pages的申请与配置，第三篇讲利用PicGo和sm.ms实现图床功能。
 Hugo的安装与使用 这部分主要参考的是Hugo中文文档，虽然好像已经很久没有更新了，但是还是顺利安装了下来。因为我使用的是macOS的操作系统，所以直接通过brew安装即可。
