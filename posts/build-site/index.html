@@ -217,7 +217,7 @@ hugo new post/POST_NAME.md  这样在content/post文件夹下就会生成一个.
 <pre><code>hugo new post/POST_NAME.md
 </code></pre>
 <p>这样在<code>content/post</code>文件夹下就会生成一个<code>.md</code>文件，打开里面会包含由<code>---</code>分隔的头信息，其中<code>title</code>就是文章的标题，<code>draft</code>表示文章的状态，默认一开始就是草稿的状态，这个时候在<code>hugo server -D</code>预览的时候能顺利显示该文章，但是在<code>hugo</code>发布文章的时候并不会显示，所以当你要发布的时候记得把<code>draft</code>改为false。</p>
-<p>写好了文章就在本地浏览器里预览效果吧。回到站点文件夹，运行<code>hugo server -D</code>之后，在浏览器内访问地址<a href="http://localhost:1313">http://localhost:1313</a>就可以看到显示的效果了。如果一切满意，就可以直接运行hugo（对，没有错，不用加任何参数，直接hugo）发布站点。这时候会生成一个public的文件夹，这个文件夹内就包含了由hugo生成的html文件，之后通过把这些文件同步到GitHub Pages上就可以实现一个个人网址啦。</p>
+<p>写好了文章就在本地浏览器里预览效果吧。回到站点文件夹，运行<code>hugo server -D</code>之后，在浏览器内访问地址<a href="http://localhost:1313">http://localhost:1313</a>就可以看到显示的效果了。如果一切满意，就可以直接运行<code>hugo</code>（对，没有错，不用加任何参数，直接hugo）发布站点。这时候会生成一个public的文件夹，这个文件夹内就包含了由hugo生成的html文件，之后通过把这些文件同步到GitHub Pages上就可以实现一个个人网址啦。</p>
 
 
   </div>
