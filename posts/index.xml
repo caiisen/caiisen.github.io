@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Posts on Sen</title>
+    <link>https://caiisen.github.io/posts/</link>
+    <description>Recent content in Posts on Sen</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 28 Jun 2021 20:59:28 +0800</lastBuildDate><atom:link href="https://caiisen.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>搭建个人网站(一) Hugo</title>
+      <link>https://caiisen.github.io/posts/build-site/</link>
+      <pubDate>Mon, 28 Jun 2021 20:59:28 +0800</pubDate>
+      
+      <guid>https://caiisen.github.io/posts/build-site/</guid>
+      <description>背景 前段时间开始了解并使用GitHub，看到大佬们自己在博客上分享帖子，很是羡慕，借此机会打算利用GitHub Pages来搭建一个个人网址。搭建的软件（暂且这么称呼吧）比较常见的有GitHub自己推荐的基于Ruby的Jekyll，Heko和基于GO的Hugo。简单尝试了Jekyll之后被复杂的配置方式劝退了，恰巧看到v站上关于Heko和Hugo的讨论，于是决定试一下Hugo（但还是要夸一下Heko优秀的中文文档），以下主要是记录流程，大部分都是参考网上现有的教程，但是找不到参考教程的网址了，实在抱歉，后面找到会再补充到文末。
+这个系列文章应该会分成三篇，第一篇介绍Hugo的安装与使用，第二篇介绍GitHub Pages的申请与配置，第三篇讲利用PicGo和sm.ms实现图床功能。
+Hugo的安装与使用 这部分主要参考的是Hugo中文文档，虽然好像已经很久没有更新了，但是还是顺利安装了下来。因为我使用的是macOS的操作系统，所以直接通过brew安装即可。
+brew install hugo  安装完成之后就可以通过hugo --help查看Hugo的详细参数啦。接下来开始创建一个站点，站点保存的路径我用PATH替代，这里可以根据需要换成自己的路径，可以是相对路径也可以是绝对路径。（类似的方式在下文中会经常出现，就不再一一交代，即大写字母替换为自定义的参数）
+hugo new site PATH  这样在你的路径下就生成了一个文件夹，文件夹内保存着这个站点的所有文件。其中，content文件夹主要存放后续的文章，theme文件夹存放主题文件，config.tmol是设置站点的样式。Hugo提供了非常多的预设主题，可以直接在主题商店下载使用。这里我选了一个叫PaperMod的主题，复制下载链接，在theme文件夹内通过git clone下载即可。
+git clone https://github.com/adityatelange/hugo-PaperMod.git  之后回到config.tmol中添加一句theme = &amp;quot;hugo-PaperMod&amp;quot;就可以应用这个主题了。顺带提一句，这个文件中的title就是站点的名称，可以更改为自己想要的名字。
+设置好了站点主题，就开始新建一篇文章吧，默认直接采用markdown的后缀名。
+hugo new post/POST_NAME.md  这样在content/post文件夹下就会生成一个.md文件，打开里面会包含由---分隔的头信息，其中title就是文章的标题，draft表示文章的状态，默认一开始就是草稿的状态，这个时候在hugo server -D预览的时候能顺利显示该文章，但是在hugo发布文章的时候并不会显示，所以当你要发布的时候记得把draft改为false。
+写好了文章就在本地浏览器里预览效果吧。回到站点文件夹，运行hugo server -D之后，在浏览器内访问地址http://localhost:1313就可以看到显示的效果了。如果一切满意，就可以直接运行hugo（对，没有错，不用加任何参数，直接hugo）发布站点。这时候会生成一个public的文件夹，这个文件夹内就包含了由hugo生成的html文件，之后通过把这些文件同步到GitHub Pages上就可以实现一个个人网址啦。</description>
+    </item>
+    
+  </channel>
+</rss>
