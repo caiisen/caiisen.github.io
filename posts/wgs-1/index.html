@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>WGS群体分析（一）数据准备 | Sen</title>
+<meta name="keywords" content="" />
+<meta name="description" content="背景 群体分析通过对多个个体进行重测序，可以发现不同个体中存在的变异，挖掘在驯化过程中收到选择的位点。目前网上大多的教程都是基于GATK进行的call SNP，但是GATK对多线程的支持很不友好，在GATK3中可以通过-nt和-ncr参数来进行多线程运算，在GATK4中已经取消了这些参数，虽然还是可以通过调整–native-pair-hmm-threads来加快核心计算程序，但是效果很不理想。相较之下Sentieon能提供更稳定更快的计算，因为是基于GATK的，结果也较为准确。Sentieon提供了很详细的帮助文档，我在此基础上记录下操作过程可供参考。
+这个系列大致分为三部分吧，第一部分是数据的准备，第二部分是call SNP，第三部分是其他下游分析。
+FastQC质控 测序公司在交付重测序原始数据的时候基本已经通过了质量控制，交付的是clean data，而且现在二代测序十分普及，流程很完善，基本可以直接使用公司提供的原始数据了。这一步主要是针对在NCBI上存储的其他研究测的数据，特别是早些年的数据质量参差不齐，需要自己质控一下。这里使用的软件是FastQC，可以通过conda直接安装。
+conda install fastqc  如果想一次对多个文件提交操作，可以使用下面的命令，此处-t设置线程数为108是因为有108个fq文件，每个文件使用一个线程并行计算。-o指定输出的文件路径，此文件夹需提前建立。
+fastqc -t 108 -o fastqc/ *.gz  FastQC会为每个fq文件生成一份.html报告和一个.zip压缩包，在本地电脑浏览器打开.html文件就可以查看报告。但是如果文件数量太多一个一个看太不方便，可以使用MultiQC软件汇总结果，生成一份总的报告。MultiQC可以用过pip安装。
+pip3 install multiqc  直接提供fastqc的结果文件夹给MultiQC即可，它会检索文件夹里报告的数量，生成一份汇总报告。
+multiqc fastqc/  结果文件是一个.multiqc_report.html和一个multiqc_data文件夹，下载html文件在浏览器就可以打开查看报告了
+Trimmomatic过滤 对于原始数据质量不过关的文件，可以使用Trimmomatic进行过滤。主要的过滤目的有两个，一个是去除低质量的碱基，还有一个就是去除接头。Trimmomatic使用的是java，在官网下载解压就可以用。
+wget http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-0.39.zip unzip Trimmomatic-0.39.zip cd Trimmomatic-0.39 java -jar trimmomatic-0.39.jar  这里介绍使用的几个参数。PE是双端测序模式，如果是单端测序改成SE。-threads指定线程数量，我试过给一个比较大的数，但是cpu的使用率一直在300多一些，所以每个文件就指定了4个线程。后面的文件名顺序依次是原始fq1 原始fq2 过滤后fq1 过滤后未成对fq1 过滤后fq2 过滤后未成对fq2。ILLUMINACLIP指定接头文件的路径和匹配参数，这里的匹配参数具体意义还不明确，暂时使用陈连福老师教程里的数值。LEADING指定去除前端碱基质量值(Qscore)小于20的碱基。TRAILING指定去除末端碱基质量值(Qscore)小于20的碱基。SLIDINGWINDOW指定以4个碱基为一个窗口滑动，去除平均质量值小于25的碱基。MINLEN指定保留的最小读段长度。TOPHRED33将碱基质量值转换为phred33格式（原始就是phred33格式的话应该可以不加，但是暂时还是按照陈连福老师的教程加了）。
+java -jar ~/software/Trimmomatic-0.39/trimmomatic-0.39.jar PE -threads 4 ${RAW.1.FQ.GZ} ${RAW.2.FQ.GZ} ${CLEAN.1.FQ.GZ} ${UNPAIR.1.FQ.GZ} ${CLEAN.2.FQ.GZ} ${UNPAIR.2.FQ.GZ} ILLUMINACLIP:${ADEPTER.FA}:2:30:10 LEADING:20 TRAILING:20 SLIDINGWINDOW:4:25 MINLEN:50 TOPHRED33  对于多个文件都要过滤的话可以参考下面的脚本模板一次性提交
+java -jar ~/software/Trimmomatic-0.">
+<meta name="author" content="">
+<link rel="canonical" href="https://blog.caiisen.top/posts/wgs-1/" />
+<link crossorigin="anonymous" href="/assets/css/stylesheet.min.fe63ae84f306727c713665eb03a6c71ec6c611434c8182ba17ba7e7d26a979e9.css" integrity="sha256-/mOuhPMGcnxxNmXrA6bHHsbGEUNMgYK6F7p&#43;fSapeek=" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.min.7680afc38aa6b15ddf158a4f3780b7b1f7dde7e91d26f073e6229bb7a0793c92.js" integrity="sha256-doCvw4qmsV3fFYpPN4C3sffd5&#43;kdJvBz5iKbt6B5PJI="
+    onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="https://blog.caiisen.top/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://blog.caiisen.top/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://blog.caiisen.top/favicon-32x32.png">
+<link rel="apple-touch-icon" href="https://blog.caiisen.top/apple-touch-icon.png">
+<link rel="mask-icon" href="https://blog.caiisen.top/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<meta name="generator" content="Hugo 0.82.1" />
+<meta property="og:title" content="WGS群体分析（一）数据准备" />
+<meta property="og:description" content="背景 群体分析通过对多个个体进行重测序，可以发现不同个体中存在的变异，挖掘在驯化过程中收到选择的位点。目前网上大多的教程都是基于GATK进行的call SNP，但是GATK对多线程的支持很不友好，在GATK3中可以通过-nt和-ncr参数来进行多线程运算，在GATK4中已经取消了这些参数，虽然还是可以通过调整–native-pair-hmm-threads来加快核心计算程序，但是效果很不理想。相较之下Sentieon能提供更稳定更快的计算，因为是基于GATK的，结果也较为准确。Sentieon提供了很详细的帮助文档，我在此基础上记录下操作过程可供参考。
+这个系列大致分为三部分吧，第一部分是数据的准备，第二部分是call SNP，第三部分是其他下游分析。
+FastQC质控 测序公司在交付重测序原始数据的时候基本已经通过了质量控制，交付的是clean data，而且现在二代测序十分普及，流程很完善，基本可以直接使用公司提供的原始数据了。这一步主要是针对在NCBI上存储的其他研究测的数据，特别是早些年的数据质量参差不齐，需要自己质控一下。这里使用的软件是FastQC，可以通过conda直接安装。
+conda install fastqc  如果想一次对多个文件提交操作，可以使用下面的命令，此处-t设置线程数为108是因为有108个fq文件，每个文件使用一个线程并行计算。-o指定输出的文件路径，此文件夹需提前建立。
+fastqc -t 108 -o fastqc/ *.gz  FastQC会为每个fq文件生成一份.html报告和一个.zip压缩包，在本地电脑浏览器打开.html文件就可以查看报告。但是如果文件数量太多一个一个看太不方便，可以使用MultiQC软件汇总结果，生成一份总的报告。MultiQC可以用过pip安装。
+pip3 install multiqc  直接提供fastqc的结果文件夹给MultiQC即可，它会检索文件夹里报告的数量，生成一份汇总报告。
+multiqc fastqc/  结果文件是一个.multiqc_report.html和一个multiqc_data文件夹，下载html文件在浏览器就可以打开查看报告了
+Trimmomatic过滤 对于原始数据质量不过关的文件，可以使用Trimmomatic进行过滤。主要的过滤目的有两个，一个是去除低质量的碱基，还有一个就是去除接头。Trimmomatic使用的是java，在官网下载解压就可以用。
+wget http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-0.39.zip unzip Trimmomatic-0.39.zip cd Trimmomatic-0.39 java -jar trimmomatic-0.39.jar  这里介绍使用的几个参数。PE是双端测序模式，如果是单端测序改成SE。-threads指定线程数量，我试过给一个比较大的数，但是cpu的使用率一直在300多一些，所以每个文件就指定了4个线程。后面的文件名顺序依次是原始fq1 原始fq2 过滤后fq1 过滤后未成对fq1 过滤后fq2 过滤后未成对fq2。ILLUMINACLIP指定接头文件的路径和匹配参数，这里的匹配参数具体意义还不明确，暂时使用陈连福老师教程里的数值。LEADING指定去除前端碱基质量值(Qscore)小于20的碱基。TRAILING指定去除末端碱基质量值(Qscore)小于20的碱基。SLIDINGWINDOW指定以4个碱基为一个窗口滑动，去除平均质量值小于25的碱基。MINLEN指定保留的最小读段长度。TOPHRED33将碱基质量值转换为phred33格式（原始就是phred33格式的话应该可以不加，但是暂时还是按照陈连福老师的教程加了）。
+java -jar ~/software/Trimmomatic-0.39/trimmomatic-0.39.jar PE -threads 4 ${RAW.1.FQ.GZ} ${RAW.2.FQ.GZ} ${CLEAN.1.FQ.GZ} ${UNPAIR.1.FQ.GZ} ${CLEAN.2.FQ.GZ} ${UNPAIR.2.FQ.GZ} ILLUMINACLIP:${ADEPTER.FA}:2:30:10 LEADING:20 TRAILING:20 SLIDINGWINDOW:4:25 MINLEN:50 TOPHRED33  对于多个文件都要过滤的话可以参考下面的脚本模板一次性提交
+java -jar ~/software/Trimmomatic-0." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blog.caiisen.top/posts/wgs-1/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2021-06-30T16:57:55&#43;08:00" />
+<meta property="article:modified_time" content="2021-06-30T16:57:55&#43;08:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="WGS群体分析（一）数据准备"/>
+<meta name="twitter:description" content="背景 群体分析通过对多个个体进行重测序，可以发现不同个体中存在的变异，挖掘在驯化过程中收到选择的位点。目前网上大多的教程都是基于GATK进行的call SNP，但是GATK对多线程的支持很不友好，在GATK3中可以通过-nt和-ncr参数来进行多线程运算，在GATK4中已经取消了这些参数，虽然还是可以通过调整–native-pair-hmm-threads来加快核心计算程序，但是效果很不理想。相较之下Sentieon能提供更稳定更快的计算，因为是基于GATK的，结果也较为准确。Sentieon提供了很详细的帮助文档，我在此基础上记录下操作过程可供参考。
+这个系列大致分为三部分吧，第一部分是数据的准备，第二部分是call SNP，第三部分是其他下游分析。
+FastQC质控 测序公司在交付重测序原始数据的时候基本已经通过了质量控制，交付的是clean data，而且现在二代测序十分普及，流程很完善，基本可以直接使用公司提供的原始数据了。这一步主要是针对在NCBI上存储的其他研究测的数据，特别是早些年的数据质量参差不齐，需要自己质控一下。这里使用的软件是FastQC，可以通过conda直接安装。
+conda install fastqc  如果想一次对多个文件提交操作，可以使用下面的命令，此处-t设置线程数为108是因为有108个fq文件，每个文件使用一个线程并行计算。-o指定输出的文件路径，此文件夹需提前建立。
+fastqc -t 108 -o fastqc/ *.gz  FastQC会为每个fq文件生成一份.html报告和一个.zip压缩包，在本地电脑浏览器打开.html文件就可以查看报告。但是如果文件数量太多一个一个看太不方便，可以使用MultiQC软件汇总结果，生成一份总的报告。MultiQC可以用过pip安装。
+pip3 install multiqc  直接提供fastqc的结果文件夹给MultiQC即可，它会检索文件夹里报告的数量，生成一份汇总报告。
+multiqc fastqc/  结果文件是一个.multiqc_report.html和一个multiqc_data文件夹，下载html文件在浏览器就可以打开查看报告了
+Trimmomatic过滤 对于原始数据质量不过关的文件，可以使用Trimmomatic进行过滤。主要的过滤目的有两个，一个是去除低质量的碱基，还有一个就是去除接头。Trimmomatic使用的是java，在官网下载解压就可以用。
+wget http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-0.39.zip unzip Trimmomatic-0.39.zip cd Trimmomatic-0.39 java -jar trimmomatic-0.39.jar  这里介绍使用的几个参数。PE是双端测序模式，如果是单端测序改成SE。-threads指定线程数量，我试过给一个比较大的数，但是cpu的使用率一直在300多一些，所以每个文件就指定了4个线程。后面的文件名顺序依次是原始fq1 原始fq2 过滤后fq1 过滤后未成对fq1 过滤后fq2 过滤后未成对fq2。ILLUMINACLIP指定接头文件的路径和匹配参数，这里的匹配参数具体意义还不明确，暂时使用陈连福老师教程里的数值。LEADING指定去除前端碱基质量值(Qscore)小于20的碱基。TRAILING指定去除末端碱基质量值(Qscore)小于20的碱基。SLIDINGWINDOW指定以4个碱基为一个窗口滑动，去除平均质量值小于25的碱基。MINLEN指定保留的最小读段长度。TOPHRED33将碱基质量值转换为phred33格式（原始就是phred33格式的话应该可以不加，但是暂时还是按照陈连福老师的教程加了）。
+java -jar ~/software/Trimmomatic-0.39/trimmomatic-0.39.jar PE -threads 4 ${RAW.1.FQ.GZ} ${RAW.2.FQ.GZ} ${CLEAN.1.FQ.GZ} ${UNPAIR.1.FQ.GZ} ${CLEAN.2.FQ.GZ} ${UNPAIR.2.FQ.GZ} ILLUMINACLIP:${ADEPTER.FA}:2:30:10 LEADING:20 TRAILING:20 SLIDINGWINDOW:4:25 MINLEN:50 TOPHRED33  对于多个文件都要过滤的话可以参考下面的脚本模板一次性提交
+java -jar ~/software/Trimmomatic-0."/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "https://blog.caiisen.top/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "WGS群体分析（一）数据准备",
+      "item": "https://blog.caiisen.top/posts/wgs-1/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "WGS群体分析（一）数据准备",
+  "name": "WGS群体分析（一）数据准备",
+  "description": "背景 群体分析通过对多个个体进行重测序，可以发现不同个体中存在的变异，挖掘在驯化过程中收到选择的位点。目前网上大多的教程都是基于GATK进行的call SNP，但是GATK对多线程的支持很不友好，在GATK3中可以通过-nt和-ncr参数来进行多线程运算，在GATK4中已经取消了这些参数，虽然还是可以通过调整–native-pair-hmm-threads来加快核心计算程序，但是效果很不理想。相较之下Sentieon能提供更稳定更快的计算，因为是基于GATK的，结果也较为准确。Sentieon提供了很详细的帮助文档，我在此基础上记录下操作过程可供参考。\n这个系列大致分为三部分吧，第一部分是数据的准备，第二部分是call SNP，第三部分是其他下游分析。\nFastQC质控 测序公司在交付重测序原始数据的时候基本已经通过了质量控制，交付的是clean data，而且现在二代测序十分普及，流程很完善，基本可以直接使用公司提供的原始数据了。这一步主要是针对在NCBI上存储的其他研究测的数据，特别是早些年的数据质量参差不齐，需要自己质控一下。这里使用的软件是FastQC，可以通过conda直接安装。\nconda install fastqc  如果想一次对多个文件提交操作，可以使用下面的命令，此处-t设置线程数为108是因为有108个fq文件，每个文件使用一个线程并行计算。-o指定输出的文件路径，此文件夹需提前建立。\nfastqc -t 108 -o fastqc/ *.gz  FastQC会为每个fq文件生成一份.html报告和一个.zip压缩包，在本地电脑浏览器打开.html文件就可以查看报告。但是如果文件数量太多一个一个看太不方便，可以使用MultiQC软件汇总结果，生成一份总的报告。MultiQC可以用过pip安装。\npip3 install multiqc  直接提供fastqc的结果文件夹给MultiQC即可，它会检索文件夹里报告的数量，生成一份汇总报告。\nmultiqc fastqc/  结果文件是一个.multiqc_report.html和一个multiqc_data文件夹，下载html文件在浏览器就可以打开查看报告了\nTrimmomatic过滤 对于原始数据质量不过关的文件，可以使用Trimmomatic进行过滤。主要的过滤目的有两个，一个是去除低质量的碱基，还有一个就是去除接头。Trimmomatic使用的是java，在官网下载解压就可以用。\nwget http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-0.39.zip unzip Trimmomatic-0.39.zip cd Trimmomatic-0.39 java -jar trimmomatic-0.39.jar  这里介绍使用的几个参数。PE是双端测序模式，如果是单端测序改成SE。-threads指定线程数量，我试过给一个比较大的数，但是cpu的使用率一直在300多一些，所以每个文件就指定了4个线程。后面的文件名顺序依次是原始fq1 原始fq2 过滤后fq1 过滤后未成对fq1 过滤后fq2 过滤后未成对fq2。ILLUMINACLIP指定接头文件的路径和匹配参数，这里的匹配参数具体意义还不明确，暂时使用陈连福老师教程里的数值。LEADING指定去除前端碱基质量值(Qscore)小于20的碱基。TRAILING指定去除末端碱基质量值(Qscore)小于20的碱基。SLIDINGWINDOW指定以4个碱基为一个窗口滑动，去除平均质量值小于25的碱基。MINLEN指定保留的最小读段长度。TOPHRED33将碱基质量值转换为phred33格式（原始就是phred33格式的话应该可以不加，但是暂时还是按照陈连福老师的教程加了）。\njava -jar ~/software/Trimmomatic-0.39/trimmomatic-0.39.jar PE -threads 4 ${RAW.1.FQ.GZ} ${RAW.2.FQ.GZ} ${CLEAN.1.FQ.GZ} ${UNPAIR.1.FQ.GZ} ${CLEAN.2.FQ.GZ} ${UNPAIR.2.FQ.GZ} ILLUMINACLIP:${ADEPTER.FA}:2:30:10 LEADING:20 TRAILING:20 SLIDINGWINDOW:4:25 MINLEN:50 TOPHRED33  对于多个文件都要过滤的话可以参考下面的脚本模板一次性提交\njava -jar ~/software/Trimmomatic-0.",
+  "keywords": [
+    
+  ],
+  "articleBody": "背景 群体分析通过对多个个体进行重测序，可以发现不同个体中存在的变异，挖掘在驯化过程中收到选择的位点。目前网上大多的教程都是基于GATK进行的call SNP，但是GATK对多线程的支持很不友好，在GATK3中可以通过-nt和-ncr参数来进行多线程运算，在GATK4中已经取消了这些参数，虽然还是可以通过调整–native-pair-hmm-threads来加快核心计算程序，但是效果很不理想。相较之下Sentieon能提供更稳定更快的计算，因为是基于GATK的，结果也较为准确。Sentieon提供了很详细的帮助文档，我在此基础上记录下操作过程可供参考。\n这个系列大致分为三部分吧，第一部分是数据的准备，第二部分是call SNP，第三部分是其他下游分析。\nFastQC质控 测序公司在交付重测序原始数据的时候基本已经通过了质量控制，交付的是clean data，而且现在二代测序十分普及，流程很完善，基本可以直接使用公司提供的原始数据了。这一步主要是针对在NCBI上存储的其他研究测的数据，特别是早些年的数据质量参差不齐，需要自己质控一下。这里使用的软件是FastQC，可以通过conda直接安装。\nconda install fastqc  如果想一次对多个文件提交操作，可以使用下面的命令，此处-t设置线程数为108是因为有108个fq文件，每个文件使用一个线程并行计算。-o指定输出的文件路径，此文件夹需提前建立。\nfastqc -t 108 -o fastqc/ *.gz  FastQC会为每个fq文件生成一份.html报告和一个.zip压缩包，在本地电脑浏览器打开.html文件就可以查看报告。但是如果文件数量太多一个一个看太不方便，可以使用MultiQC软件汇总结果，生成一份总的报告。MultiQC可以用过pip安装。\npip3 install multiqc  直接提供fastqc的结果文件夹给MultiQC即可，它会检索文件夹里报告的数量，生成一份汇总报告。\nmultiqc fastqc/  结果文件是一个.multiqc_report.html和一个multiqc_data文件夹，下载html文件在浏览器就可以打开查看报告了\nTrimmomatic过滤 对于原始数据质量不过关的文件，可以使用Trimmomatic进行过滤。主要的过滤目的有两个，一个是去除低质量的碱基，还有一个就是去除接头。Trimmomatic使用的是java，在官网下载解压就可以用。\nwget http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-0.39.zip unzip Trimmomatic-0.39.zip cd Trimmomatic-0.39 java -jar trimmomatic-0.39.jar  这里介绍使用的几个参数。PE是双端测序模式，如果是单端测序改成SE。-threads指定线程数量，我试过给一个比较大的数，但是cpu的使用率一直在300多一些，所以每个文件就指定了4个线程。后面的文件名顺序依次是原始fq1 原始fq2 过滤后fq1 过滤后未成对fq1 过滤后fq2 过滤后未成对fq2。ILLUMINACLIP指定接头文件的路径和匹配参数，这里的匹配参数具体意义还不明确，暂时使用陈连福老师教程里的数值。LEADING指定去除前端碱基质量值(Qscore)小于20的碱基。TRAILING指定去除末端碱基质量值(Qscore)小于20的碱基。SLIDINGWINDOW指定以4个碱基为一个窗口滑动，去除平均质量值小于25的碱基。MINLEN指定保留的最小读段长度。TOPHRED33将碱基质量值转换为phred33格式（原始就是phred33格式的话应该可以不加，但是暂时还是按照陈连福老师的教程加了）。\njava -jar ~/software/Trimmomatic-0.39/trimmomatic-0.39.jar PE -threads 4 ${RAW.1.FQ.GZ} ${RAW.2.FQ.GZ} ${CLEAN.1.FQ.GZ} ${UNPAIR.1.FQ.GZ} ${CLEAN.2.FQ.GZ} ${UNPAIR.2.FQ.GZ} ILLUMINACLIP:${ADEPTER.FA}:2:30:10 LEADING:20 TRAILING:20 SLIDINGWINDOW:4:25 MINLEN:50 TOPHRED33  对于多个文件都要过滤的话可以参考下面的脚本模板一次性提交\njava -jar ~/software/Trimmomatic-0.39/trimmomatic-0.39.jar ....... \u0026 sleep 5 java -jar ~/software/Trimmomatic-0.39/trimmomatic-0.39.jar ....... \u0026 sleep 5 java -jar ~/software/Trimmomatic-0.39/trimmomatic-0.39.jar ....... wait 过滤完再用fastqc确认一下，没问题就可以啦。为了后面生成RGID和RGSM方便，我这里把trim.fq.gz改回fq.gz，原来的fq.gz改成raw.fq.gz，所以后面出现fq.gz其实都是用过滤后的数据进行分析。\nwgsim使用基因组模拟二代测序数据 对于那些没有提供二代数据的基因组，或者是二代数据质量较差的基因组，可以用过wgsim来把组装好的基因组序列模拟成二代测序数据。原版是lh3大佬写的，但是存在一个小问题，就是生成的fastq的时候，碱基质量值是2，如果下游分析有对碱基质量进行计算的话会引起一些问题，所以需要用shell命令修改。这里使用的是Biostarts上一个老哥的魔改版，加入了-Q参数，可以自己指定碱基的质量值，默认是最高的I，这样就不用再手动修改啦。安装命令如下\ngit clone https://github.com/hammer/wgsim.git cd wgsim gcc -g -O2 -Wall -o wgsim wgsim.c -lz -lm  简单介绍几个参数。-N指定生成的读段数量。-1和-2分别是双端文件的读段长度。后面文件的顺序是组装好的基因组序列 生成的fq1 生成的fq2。标准输出会记录每个模拟的突变位点信息，可以通过管道保存到log文件中。\nwgsim -N 40000000 -1 150 -2 150 ${GENOME} ${1.FQ.GZ} ${1.FQ.GZ} \u0026 ${LOG}  这里介绍另一个并行计算的软件ParaFly，最早是在陈连福老师的geta流程里看到的，操作简单明了。将要并行计算的命令都保存到一个文本中，以换行符分隔。ParaFly -c读取这个文件，再指定要并行计算的线程数-CPU就可以了。这个软件很适合只能单线程计算的程序批量运行。\nParaFly -c ${COMMAND.LIST} -CPU 9  模拟好之后为了节省磁盘空间，可以用gzip压缩一下\ngzip ${FQ} ",
+  "wordCount" : "123",
+  "inLanguage": "en",
+  "datePublished": "2021-06-30T16:57:55+08:00",
+  "dateModified": "2021-06-30T16:57:55+08:00",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://blog.caiisen.top/posts/wgs-1/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Sen",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://blog.caiisen.top/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+<noscript>
+    <style type="text/css">
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: #1d1e20;
+                --entry: #2e2e33;
+                --primary: rgba(255, 255, 255, 0.84);
+                --secondary: rgba(255, 255, 255, 0.56);
+                --tertiary: rgba(255, 255, 255, 0.16);
+                --content: rgba(255, 255, 255, 0.74);
+                --hljs-bg: #2e2e33;
+                --code-bg: #37383e;
+                --border: #333;
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://blog.caiisen.top/" accesskey="h" title="Sen (Alt + H)">Sen</a>
+            <span class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </span>
+        </div>
+        <ul id="menu">
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title">
+      WGS群体分析（一）数据准备
+    </h1>
+    <div class="post-meta">June 30, 2021
+</div>
+  </header> 
+  <div class="post-content"><h1 id="背景">背景<a hidden class="anchor" aria-hidden="true" href="#背景">#</a></h1>
+<p>群体分析通过对多个个体进行重测序，可以发现不同个体中存在的变异，挖掘在驯化过程中收到选择的位点。目前网上大多的教程都是基于<a href="https://gatk.broadinstitute.org/hc/en-us">GATK</a>进行的call SNP，但是GATK对多线程的支持很不友好，在GATK3中可以通过<code>-nt</code>和<code>-ncr</code>参数来进行多线程运算，在GATK4中已经取消了这些参数，虽然还是可以通过调整<code>–native-pair-hmm-threads</code>来加快核心计算程序，但是效果很不理想。相较之下<a href="https://www.sentieon.com/">Sentieon</a>能提供更稳定更快的计算，因为是基于GATK的，结果也较为准确。Sentieon提供了很详细的<a href="https://www.sentieon.com/support/">帮助文档</a>，我在此基础上记录下操作过程可供参考。</p>
+<p>这个系列大致分为三部分吧，第一部分是数据的准备，第二部分是call SNP，第三部分是其他下游分析。</p>
+<h1 id="fastqc质控">FastQC质控<a hidden class="anchor" aria-hidden="true" href="#fastqc质控">#</a></h1>
+<p>测序公司在交付重测序原始数据的时候基本已经通过了质量控制，交付的是clean data，而且现在二代测序十分普及，流程很完善，基本可以直接使用公司提供的原始数据了。这一步主要是针对在NCBI上存储的其他研究测的数据，特别是早些年的数据质量参差不齐，需要自己质控一下。这里使用的软件是<a href="https://www.bioinformatics.babraham.ac.uk/projects/fastqc/">FastQC</a>，可以通过conda直接安装。</p>
+<pre><code>conda install fastqc
+</code></pre>
+<p>如果想一次对多个文件提交操作，可以使用下面的命令，此处<code>-t</code>设置线程数为108是因为有108个fq文件，每个文件使用一个线程并行计算。<code>-o</code>指定输出的文件路径，此文件夹需提前建立。</p>
+<pre><code>fastqc -t 108 -o fastqc/ *.gz
+</code></pre>
+<p>FastQC会为每个fq文件生成一份<code>.html</code>报告和一个<code>.zip</code>压缩包，在本地电脑浏览器打开<code>.html</code>文件就可以查看报告。但是如果文件数量太多一个一个看太不方便，可以使用<a href="https://multiqc.info/">MultiQC</a>软件汇总结果，生成一份总的报告。MultiQC可以用过pip安装。</p>
+<pre><code>pip3 install multiqc
+</code></pre>
+<p>直接提供fastqc的结果文件夹给MultiQC即可，它会检索文件夹里报告的数量，生成一份汇总报告。</p>
+<pre><code>multiqc fastqc/
+</code></pre>
+<p>结果文件是一个<code>.multiqc_report.html</code>和一个<code>multiqc_data</code>文件夹，下载html文件在浏览器就可以打开查看报告了</p>
+<h1 id="trimmomatic过滤">Trimmomatic过滤<a hidden class="anchor" aria-hidden="true" href="#trimmomatic过滤">#</a></h1>
+<p>对于原始数据质量不过关的文件，可以使用<a href="http://www.usadellab.org/cms/?page=trimmomatic">Trimmomatic</a>进行过滤。主要的过滤目的有两个，一个是去除低质量的碱基，还有一个就是去除接头。Trimmomatic使用的是java，在官网下载解压就可以用。</p>
+<pre><code>wget http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-0.39.zip
+unzip Trimmomatic-0.39.zip
+cd Trimmomatic-0.39
+java -jar trimmomatic-0.39.jar
+</code></pre>
+<p>这里介绍使用的几个参数。<code>PE</code>是双端测序模式，如果是单端测序改成<code>SE</code>。<code>-threads</code>指定线程数量，我试过给一个比较大的数，但是cpu的使用率一直在300多一些，所以每个文件就指定了4个线程。后面的文件名顺序依次是<code>原始fq1 原始fq2 过滤后fq1 过滤后未成对fq1 过滤后fq2 过滤后未成对fq2</code>。<code>ILLUMINACLIP</code>指定接头文件的路径和匹配参数，这里的匹配参数具体意义还不明确，暂时使用陈连福老师教程里的数值。<code>LEADING</code>指定去除前端碱基质量值(Qscore)小于20的碱基。<code>TRAILING</code>指定去除末端碱基质量值(Qscore)小于20的碱基。<code>SLIDINGWINDOW</code>指定以4个碱基为一个窗口滑动，去除平均质量值小于25的碱基。<code>MINLEN</code>指定保留的最小读段长度。<code>TOPHRED33</code>将碱基质量值转换为phred33格式（原始就是phred33格式的话应该可以不加，但是暂时还是按照陈连福老师的教程加了）。</p>
+<pre><code>java -jar ~/software/Trimmomatic-0.39/trimmomatic-0.39.jar PE -threads 4 ${RAW.1.FQ.GZ} ${RAW.2.FQ.GZ} ${CLEAN.1.FQ.GZ} ${UNPAIR.1.FQ.GZ} ${CLEAN.2.FQ.GZ} ${UNPAIR.2.FQ.GZ} ILLUMINACLIP:${ADEPTER.FA}:2:30:10 LEADING:20 TRAILING:20 SLIDINGWINDOW:4:25 MINLEN:50 TOPHRED33
+</code></pre>
+<p>对于多个文件都要过滤的话可以参考下面的脚本模板一次性提交</p>
+<pre><code>java -jar ~/software/Trimmomatic-0.39/trimmomatic-0.39.jar ....... &amp;
+sleep 5
+java -jar ~/software/Trimmomatic-0.39/trimmomatic-0.39.jar ....... &amp;
+sleep 5
+java -jar ~/software/Trimmomatic-0.39/trimmomatic-0.39.jar .......
+wait
+</code></pre><p>过滤完再用fastqc确认一下，没问题就可以啦。为了后面生成RGID和RGSM方便，我这里把<code>trim.fq.gz</code>改回<code>fq.gz</code>，原来的<code>fq.gz</code>改成<code>raw.fq.gz</code>，所以后面出现<code>fq.gz</code>其实都是用过滤后的数据进行分析。</p>
+<h1 id="wgsim使用基因组模拟二代测序数据">wgsim使用基因组模拟二代测序数据<a hidden class="anchor" aria-hidden="true" href="#wgsim使用基因组模拟二代测序数据">#</a></h1>
+<p>对于那些没有提供二代数据的基因组，或者是二代数据质量较差的基因组，可以用过<a href="https://github.com/lh3/wgsim">wgsim</a>来把组装好的基因组序列模拟成二代测序数据。原版是lh3大佬写的，但是存在一个小问题，就是生成的fastq的时候，碱基质量值是2，如果下游分析有对碱基质量进行计算的话会引起一些问题，所以需要用shell命令修改。这里使用的是<a href="https://www.biostars.org/p/15160/">Biostarts</a>上一个老哥的魔改版，加入了<code>-Q</code>参数，可以自己指定碱基的质量值，默认是最高的I，这样就不用再手动修改啦。安装命令如下</p>
+<pre><code>git clone https://github.com/hammer/wgsim.git
+cd wgsim
+gcc -g -O2 -Wall -o wgsim wgsim.c -lz -lm
+</code></pre>
+<p>简单介绍几个参数。<code>-N</code>指定生成的读段数量。<code>-1</code>和<code>-2</code>分别是双端文件的读段长度。后面文件的顺序是<code>组装好的基因组序列 生成的fq1 生成的fq2</code>。标准输出会记录每个模拟的突变位点信息，可以通过管道保存到log文件中。</p>
+<pre><code>wgsim -N 40000000 -1 150 -2 150 ${GENOME} ${1.FQ.GZ} ${1.FQ.GZ} &amp;&gt; ${LOG}
+</code></pre>
+<p>这里介绍另一个并行计算的软件<a href="http://parafly.sourceforge.net/">ParaFly</a>，最早是在陈连福老师的geta流程里看到的，操作简单明了。将要并行计算的命令都保存到一个文本中，以换行符分隔。<code>ParaFly -c</code>读取这个文件，再指定要并行计算的线程数<code>-CPU</code>就可以了。这个软件很适合只能单线程计算的程序批量运行。</p>
+<pre><code>ParaFly -c ${COMMAND.LIST} -CPU 9
+</code></pre>
+<p>模拟好之后为了节省磁盘空间，可以用<code>gzip</code>压缩一下</p>
+<pre><code>gzip ${FQ}</code></pre>
+
+
+  </div>
+  <footer class="post-footer">
+  </footer>
+</article>
+    </main>
+    <footer class="footer">
+    <span>&copy; 2021 <a href="https://blog.caiisen.top/">Sen</a></span>
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://git.io/hugopapermod" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)">
+    <button class="top-link" id="top-link" type="button" accesskey="g">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+            <path d="M12 6H0l6-6z" />
+        </svg>
+    </button>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+    menu.onscroll = function () {
+        localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>
