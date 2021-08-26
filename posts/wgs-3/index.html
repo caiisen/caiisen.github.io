@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="robots" content="index, follow">
-<title>Wgs 3 | Sen</title>
+<title>WGS群体分析（三）过滤SNP | Sen</title>
 <meta name="keywords" content="" />
 <meta name="description" content="Pre-release! 在上一篇中，我们通过Sentieon得到了vcf文件，接下来要对vcf进行过滤，以适用不同的分析要求。首先是用于构建系统发生树的过滤流程
 进化树 King 亲缘关系判断 这一步在大多数植物群体分析的文章中并没有应用到，只是在一篇文章中偶然看到，抱着试试的心态看看结果，后来发现结果还不错，就保留了这个步骤。所以这一步是可选的。
@@ -31,7 +31,7 @@ king -b 406cannabis.jc.bed --kinship --prefix kinship --cpus 16  根据kinship.k
 <meta name="theme-color" content="#2e2e33">
 <meta name="msapplication-TileColor" content="#2e2e33">
 <meta name="generator" content="Hugo 0.82.1" />
-<meta property="og:title" content="Wgs 3" />
+<meta property="og:title" content="WGS群体分析（三）过滤SNP" />
 <meta property="og:description" content="Pre-release! 在上一篇中，我们通过Sentieon得到了vcf文件，接下来要对vcf进行过滤，以适用不同的分析要求。首先是用于构建系统发生树的过滤流程
 进化树 King 亲缘关系判断 这一步在大多数植物群体分析的文章中并没有应用到，只是在一篇文章中偶然看到，抱着试试的心态看看结果，后来发现结果还不错，就保留了这个步骤。所以这一步是可选的。
 King https://www.kingrelatedness.com/ 主要是在GWAS中用于推断亲缘关系的。在查找相关教程的时候看到有的说法是 由于亲缘关系较近的个体在后续的计算中会导致误差，例如群体历史推算和模拟等，因此需要删除一些亲缘关系较近的个体 https://github.com/shangshanzhizhe/Work_flow_of_population_genetics/blob/master/Work_flows/king.md 因此决定尝试一下。
@@ -49,7 +49,7 @@ king -b 406cannabis.jc.bed --kinship --prefix kinship --cpus 16  根据kinship.k
 <meta property="article:modified_time" content="2021-08-11T17:01:04&#43;08:00" />
 
 <meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="Wgs 3"/>
+<meta name="twitter:title" content="WGS群体分析（三）过滤SNP"/>
 <meta name="twitter:description" content="Pre-release! 在上一篇中，我们通过Sentieon得到了vcf文件，接下来要对vcf进行过滤，以适用不同的分析要求。首先是用于构建系统发生树的过滤流程
 进化树 King 亲缘关系判断 这一步在大多数植物群体分析的文章中并没有应用到，只是在一篇文章中偶然看到，抱着试试的心态看看结果，后来发现结果还不错，就保留了这个步骤。所以这一步是可选的。
 King https://www.kingrelatedness.com/ 主要是在GWAS中用于推断亲缘关系的。在查找相关教程的时候看到有的说法是 由于亲缘关系较近的个体在后续的计算中会导致误差，例如群体历史推算和模拟等，因此需要删除一些亲缘关系较近的个体 https://github.com/shangshanzhizhe/Work_flow_of_population_genetics/blob/master/Work_flows/king.md 因此决定尝试一下。
@@ -77,7 +77,7 @@ king -b 406cannabis.jc.bed --kinship --prefix kinship --cpus 16  根据kinship.k
     {
       "@type": "ListItem",
       "position":  2 ,
-      "name": "Wgs 3",
+      "name": "WGS群体分析（三）过滤SNP",
       "item": "https://blog.caiisen.top/posts/wgs-3/"
     }
   ]
@@ -87,8 +87,8 @@ king -b 406cannabis.jc.bed --kinship --prefix kinship --cpus 16  根据kinship.k
 {
   "@context": "https://schema.org",
   "@type": "BlogPosting",
-  "headline": "Wgs 3",
-  "name": "Wgs 3",
+  "headline": "WGS群体分析（三）过滤SNP",
+  "name": "WGS群体分析（三）过滤SNP",
   "description": "Pre-release! 在上一篇中，我们通过Sentieon得到了vcf文件，接下来要对vcf进行过滤，以适用不同的分析要求。首先是用于构建系统发生树的过滤流程\n进化树 King 亲缘关系判断 这一步在大多数植物群体分析的文章中并没有应用到，只是在一篇文章中偶然看到，抱着试试的心态看看结果，后来发现结果还不错，就保留了这个步骤。所以这一步是可选的。\nKing https://www.kingrelatedness.com/ 主要是在GWAS中用于推断亲缘关系的。在查找相关教程的时候看到有的说法是 由于亲缘关系较近的个体在后续的计算中会导致误差，例如群体历史推算和模拟等，因此需要删除一些亲缘关系较近的个体 https://github.com/shangshanzhizhe/Work_flow_of_population_genetics/blob/master/Work_flows/king.md 因此决定尝试一下。\nking查看亲缘关系,要先把vcf转成plink的格式\nKing的输入文件要求是PLINK的二进制文件，因此需要先将vcf转成plink的格式，主要有两个步骤，第一个是通过vcftools把vcf转成map和ped格式，第二个是通过plink生成bed bim fam 和 nosex\nvcftools --gzvcf ../../00.vcf/406cannabis.jc.vcf.gz --plink --chrom-map chrom.txt --out 406cannabis.jc  命令中通过\u0026ndash;chrom-map参数确定染色体编号，chrom.txt的格式参考vcftools https://vcftools.github.io/man_latest.html 官网，第一列为vcf文件中的染色体编号，第二列为染色体的序号，这里的染色体序号要跟给的格式一致，不能自己写chrxx，后面会识别不出来。两列之间用制表符分隔。\n#chrom.txt Chr01\t1 Chr02\t2 Chr03\t3 Chr04\t4 Chr05\t5 这一步生成map文件和ped文件。map有四列，参考 https://zzz.bwh.harvard.edu/plink/data.shtml#map ped文件格式参考 https://zzz.bwh.harvard.edu/plink/data.shtml#ped。\nplink --file 406cannabis.jc --make-bed --noweb --out 406cannabis.jc  这一步生成bed bim fam nosex四个文件。https://zzz.bwh.harvard.edu/plink/data.shtml#bed bed是二进制文件，bed会将谱系/表型信息存储在fam文件中(fam其实就是前六列的ped)，还会生成一个包含等位基因名称的bim文件\n使用king计算样本的亲缘关系\nking主要有两种算法，一种是kinship,一种是ibdseg,这里主要介绍使用kingship计算亲缘关系，然后根据kinship的值区分关系等级\nking -b 406cannabis.jc.bed --kinship --prefix kinship --cpus 16  根据kinship.kin0文件中中最后一列kinship的值划分亲缘关系。kinship \u0026gt;0.",
   "keywords": [
     
@@ -200,7 +200,7 @@ king -b 406cannabis.jc.bed --kinship --prefix kinship --cpus 16  根据kinship.k
   <header class="post-header">
     
     <h1 class="post-title">
-      Wgs 3
+      WGS群体分析（三）过滤SNP
     </h1>
     <div class="post-meta">August 11, 2021
 </div>
