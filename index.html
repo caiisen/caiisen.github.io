@@ -149,7 +149,7 @@ king -b 406cannabis.jc.bed --kinship --prefix kinship --cpus 16  根据kinship.k
 
 <article class="post-entry"> 
   <header class="entry-header">
-    <h2>WGS群体分析（一）call SNP</h2>
+    <h2>WGS群体分析（二）call SNP</h2>
   </header>
   <section class="entry-content">
     <p>Pre-release! 在上一篇中准备好了需要的二代测序数据，这篇就开始call SNP
@@ -159,7 +159,7 @@ sentieon bwa index ${GENOME} samtools faidx ${GENOME} java -jar picard.jar Creat
 ( sentieon bwa mem -M -R &#34;@RG\tID:${RGID}\tSM:${SM}\tPL:${PL}&#34; -t ${NT} -K 10000000 ${GENOME} ${FQ1} ${FQ2} || echo -n &#39;error&#39; ) | sentieon util sort -r ${GENOME} -o ${SORTED.BAM} -t ${NT} --sam2bam -i -  统计信息 去除重复 Haplotyper </p>
   </section>
   <footer class="entry-footer">July 3, 2021</footer>
-  <a class="entry-link" aria-label="post link to WGS群体分析（一）call SNP" href="https://blog.caiisen.top/posts/wgs-2/"></a>
+  <a class="entry-link" aria-label="post link to WGS群体分析（二）call SNP" href="https://blog.caiisen.top/posts/wgs-2/"></a>
 </article>
 
 <article class="post-entry"> 

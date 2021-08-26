@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="robots" content="index, follow">
-<title>WGS群体分析（一）call SNP | Sen</title>
+<title>WGS群体分析（二）call SNP | Sen</title>
 <meta name="keywords" content="" />
 <meta name="description" content="Pre-release! 在上一篇中准备好了需要的二代测序数据，这篇就开始call SNP
 bwa比对 构建索引 在开始比对之前要先对参考基因组构建索引。需要使用到三个软件sentioen bwa（目前看来跟bwa本身没有太多区别），samtools和picard，这里主要介绍samtools和picar的安装。
@@ -25,7 +25,7 @@ sentieon bwa index ${GENOME} samtools faidx ${GENOME} java -jar picard.jar Creat
 <meta name="theme-color" content="#2e2e33">
 <meta name="msapplication-TileColor" content="#2e2e33">
 <meta name="generator" content="Hugo 0.82.1" />
-<meta property="og:title" content="WGS群体分析（一）call SNP" />
+<meta property="og:title" content="WGS群体分析（二）call SNP" />
 <meta property="og:description" content="Pre-release! 在上一篇中准备好了需要的二代测序数据，这篇就开始call SNP
 bwa比对 构建索引 在开始比对之前要先对参考基因组构建索引。需要使用到三个软件sentioen bwa（目前看来跟bwa本身没有太多区别），samtools和picard，这里主要介绍samtools和picar的安装。
 # samtools conda install -c bioconda samtools # picard wget https://github.com/broadinstitute/picard/releases/download/2.25.6/picard.jar java -jar picar.jar 构建索引的流程也很简单bwa index生成.amb，.ann，.bwt，.pac和.sa文件，samtools faidx生成.fai，picard CreateSequenceDictionary生成.dict
@@ -37,7 +37,7 @@ sentieon bwa index ${GENOME} samtools faidx ${GENOME} java -jar picard.jar Creat
 <meta property="article:modified_time" content="2021-07-03T21:03:20&#43;08:00" />
 
 <meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="WGS群体分析（一）call SNP"/>
+<meta name="twitter:title" content="WGS群体分析（二）call SNP"/>
 <meta name="twitter:description" content="Pre-release! 在上一篇中准备好了需要的二代测序数据，这篇就开始call SNP
 bwa比对 构建索引 在开始比对之前要先对参考基因组构建索引。需要使用到三个软件sentioen bwa（目前看来跟bwa本身没有太多区别），samtools和picard，这里主要介绍samtools和picar的安装。
 # samtools conda install -c bioconda samtools # picard wget https://github.com/broadinstitute/picard/releases/download/2.25.6/picard.jar java -jar picar.jar 构建索引的流程也很简单bwa index生成.amb，.ann，.bwt，.pac和.sa文件，samtools faidx生成.fai，picard CreateSequenceDictionary生成.dict
@@ -59,7 +59,7 @@ sentieon bwa index ${GENOME} samtools faidx ${GENOME} java -jar picard.jar Creat
     {
       "@type": "ListItem",
       "position":  2 ,
-      "name": "WGS群体分析（一）call SNP",
+      "name": "WGS群体分析（二）call SNP",
       "item": "https://blog.caiisen.top/posts/wgs-2/"
     }
   ]
@@ -69,8 +69,8 @@ sentieon bwa index ${GENOME} samtools faidx ${GENOME} java -jar picard.jar Creat
 {
   "@context": "https://schema.org",
   "@type": "BlogPosting",
-  "headline": "WGS群体分析（一）call SNP",
-  "name": "WGS群体分析（一）call SNP",
+  "headline": "WGS群体分析（二）call SNP",
+  "name": "WGS群体分析（二）call SNP",
   "description": "Pre-release! 在上一篇中准备好了需要的二代测序数据，这篇就开始call SNP\nbwa比对 构建索引 在开始比对之前要先对参考基因组构建索引。需要使用到三个软件sentioen bwa（目前看来跟bwa本身没有太多区别），samtools和picard，这里主要介绍samtools和picar的安装。\n# samtools conda install -c bioconda samtools # picard wget https://github.com/broadinstitute/picard/releases/download/2.25.6/picard.jar java -jar picar.jar 构建索引的流程也很简单bwa index生成.amb，.ann，.bwt，.pac和.sa文件，samtools faidx生成.fai，picard CreateSequenceDictionary生成.dict\nsentieon bwa index ${GENOME} samtools faidx ${GENOME} java -jar picard.jar CreateSequenceDictionary REFERENCE=${GENOME} OUTPUT=${DICT} 比对与排序 这里将比对和排序两个步骤合并在一起执行。比对的部分还是使用的sentioen bwa，算法部分使用的是mem，-M\n( sentieon bwa mem -M -R \u0026quot;@RG\\tID:${RGID}\\tSM:${SM}\\tPL:${PL}\u0026quot; -t ${NT} -K 10000000 ${GENOME} ${FQ1} ${FQ2} || echo -n 'error' ) | sentieon util sort -r ${GENOME} -o ${SORTED.BAM} -t ${NT} --sam2bam -i -  统计信息 去除重复 Haplotyper ",
   "keywords": [
     
@@ -182,7 +182,7 @@ sentieon bwa index ${GENOME} samtools faidx ${GENOME} java -jar picard.jar Creat
   <header class="post-header">
     
     <h1 class="post-title">
-      WGS群体分析（一）call SNP
+      WGS群体分析（二）call SNP
     </h1>
     <div class="post-meta">July 3, 2021
 </div>
