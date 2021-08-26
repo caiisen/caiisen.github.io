@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Wgs 3 | Sen</title>
+<meta name="keywords" content="" />
+<meta name="description" content="Pre-release! 在上一篇中，我们通过Sentieon得到了vcf文件，接下来要对vcf进行过滤，以适用不同的分析要求。首先是用于构建系统发生树的过滤流程
+进化树 King 亲缘关系判断 这一步在大多数植物群体分析的文章中并没有应用到，只是在一篇文章中偶然看到，抱着试试的心态看看结果，后来发现结果还不错，就保留了这个步骤。所以这一步是可选的。
+King https://www.kingrelatedness.com/ 主要是在GWAS中用于推断亲缘关系的。在查找相关教程的时候看到有的说法是 由于亲缘关系较近的个体在后续的计算中会导致误差，例如群体历史推算和模拟等，因此需要删除一些亲缘关系较近的个体 https://github.com/shangshanzhizhe/Work_flow_of_population_genetics/blob/master/Work_flows/king.md 因此决定尝试一下。
+king查看亲缘关系,要先把vcf转成plink的格式
+King的输入文件要求是PLINK的二进制文件，因此需要先将vcf转成plink的格式，主要有两个步骤，第一个是通过vcftools把vcf转成map和ped格式，第二个是通过plink生成bed bim fam 和 nosex
+vcftools --gzvcf ../../00.vcf/406cannabis.jc.vcf.gz --plink --chrom-map chrom.txt --out 406cannabis.jc  命令中通过&ndash;chrom-map参数确定染色体编号，chrom.txt的格式参考vcftools https://vcftools.github.io/man_latest.html 官网，第一列为vcf文件中的染色体编号，第二列为染色体的序号，这里的染色体序号要跟给的格式一致，不能自己写chrxx，后面会识别不出来。两列之间用制表符分隔。
+#chrom.txt Chr01	1 Chr02	2 Chr03	3 Chr04	4 Chr05	5 这一步生成map文件和ped文件。map有四列，参考 https://zzz.bwh.harvard.edu/plink/data.shtml#map ped文件格式参考 https://zzz.bwh.harvard.edu/plink/data.shtml#ped。
+plink --file 406cannabis.jc --make-bed --noweb --out 406cannabis.jc  这一步生成bed bim fam nosex四个文件。https://zzz.bwh.harvard.edu/plink/data.shtml#bed bed是二进制文件，bed会将谱系/表型信息存储在fam文件中(fam其实就是前六列的ped)，还会生成一个包含等位基因名称的bim文件
+使用king计算样本的亲缘关系
+king主要有两种算法，一种是kinship,一种是ibdseg,这里主要介绍使用kingship计算亲缘关系，然后根据kinship的值区分关系等级
+king -b 406cannabis.jc.bed --kinship --prefix kinship --cpus 16  根据kinship.kin0文件中中最后一列kinship的值划分亲缘关系。kinship &gt;0.">
+<meta name="author" content="">
+<link rel="canonical" href="https://blog.caiisen.top/posts/wgs-3/" />
+<link crossorigin="anonymous" href="/assets/css/stylesheet.min.fe63ae84f306727c713665eb03a6c71ec6c611434c8182ba17ba7e7d26a979e9.css" integrity="sha256-/mOuhPMGcnxxNmXrA6bHHsbGEUNMgYK6F7p&#43;fSapeek=" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.min.7680afc38aa6b15ddf158a4f3780b7b1f7dde7e91d26f073e6229bb7a0793c92.js" integrity="sha256-doCvw4qmsV3fFYpPN4C3sffd5&#43;kdJvBz5iKbt6B5PJI="
+    onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="https://blog.caiisen.top/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://blog.caiisen.top/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://blog.caiisen.top/favicon-32x32.png">
+<link rel="apple-touch-icon" href="https://blog.caiisen.top/apple-touch-icon.png">
+<link rel="mask-icon" href="https://blog.caiisen.top/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<meta name="generator" content="Hugo 0.82.1" />
+<meta property="og:title" content="Wgs 3" />
+<meta property="og:description" content="Pre-release! 在上一篇中，我们通过Sentieon得到了vcf文件，接下来要对vcf进行过滤，以适用不同的分析要求。首先是用于构建系统发生树的过滤流程
+进化树 King 亲缘关系判断 这一步在大多数植物群体分析的文章中并没有应用到，只是在一篇文章中偶然看到，抱着试试的心态看看结果，后来发现结果还不错，就保留了这个步骤。所以这一步是可选的。
+King https://www.kingrelatedness.com/ 主要是在GWAS中用于推断亲缘关系的。在查找相关教程的时候看到有的说法是 由于亲缘关系较近的个体在后续的计算中会导致误差，例如群体历史推算和模拟等，因此需要删除一些亲缘关系较近的个体 https://github.com/shangshanzhizhe/Work_flow_of_population_genetics/blob/master/Work_flows/king.md 因此决定尝试一下。
+king查看亲缘关系,要先把vcf转成plink的格式
+King的输入文件要求是PLINK的二进制文件，因此需要先将vcf转成plink的格式，主要有两个步骤，第一个是通过vcftools把vcf转成map和ped格式，第二个是通过plink生成bed bim fam 和 nosex
+vcftools --gzvcf ../../00.vcf/406cannabis.jc.vcf.gz --plink --chrom-map chrom.txt --out 406cannabis.jc  命令中通过&ndash;chrom-map参数确定染色体编号，chrom.txt的格式参考vcftools https://vcftools.github.io/man_latest.html 官网，第一列为vcf文件中的染色体编号，第二列为染色体的序号，这里的染色体序号要跟给的格式一致，不能自己写chrxx，后面会识别不出来。两列之间用制表符分隔。
+#chrom.txt Chr01	1 Chr02	2 Chr03	3 Chr04	4 Chr05	5 这一步生成map文件和ped文件。map有四列，参考 https://zzz.bwh.harvard.edu/plink/data.shtml#map ped文件格式参考 https://zzz.bwh.harvard.edu/plink/data.shtml#ped。
+plink --file 406cannabis.jc --make-bed --noweb --out 406cannabis.jc  这一步生成bed bim fam nosex四个文件。https://zzz.bwh.harvard.edu/plink/data.shtml#bed bed是二进制文件，bed会将谱系/表型信息存储在fam文件中(fam其实就是前六列的ped)，还会生成一个包含等位基因名称的bim文件
+使用king计算样本的亲缘关系
+king主要有两种算法，一种是kinship,一种是ibdseg,这里主要介绍使用kingship计算亲缘关系，然后根据kinship的值区分关系等级
+king -b 406cannabis.jc.bed --kinship --prefix kinship --cpus 16  根据kinship.kin0文件中中最后一列kinship的值划分亲缘关系。kinship &gt;0." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blog.caiisen.top/posts/wgs-3/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2021-08-11T17:01:04&#43;08:00" />
+<meta property="article:modified_time" content="2021-08-11T17:01:04&#43;08:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Wgs 3"/>
+<meta name="twitter:description" content="Pre-release! 在上一篇中，我们通过Sentieon得到了vcf文件，接下来要对vcf进行过滤，以适用不同的分析要求。首先是用于构建系统发生树的过滤流程
+进化树 King 亲缘关系判断 这一步在大多数植物群体分析的文章中并没有应用到，只是在一篇文章中偶然看到，抱着试试的心态看看结果，后来发现结果还不错，就保留了这个步骤。所以这一步是可选的。
+King https://www.kingrelatedness.com/ 主要是在GWAS中用于推断亲缘关系的。在查找相关教程的时候看到有的说法是 由于亲缘关系较近的个体在后续的计算中会导致误差，例如群体历史推算和模拟等，因此需要删除一些亲缘关系较近的个体 https://github.com/shangshanzhizhe/Work_flow_of_population_genetics/blob/master/Work_flows/king.md 因此决定尝试一下。
+king查看亲缘关系,要先把vcf转成plink的格式
+King的输入文件要求是PLINK的二进制文件，因此需要先将vcf转成plink的格式，主要有两个步骤，第一个是通过vcftools把vcf转成map和ped格式，第二个是通过plink生成bed bim fam 和 nosex
+vcftools --gzvcf ../../00.vcf/406cannabis.jc.vcf.gz --plink --chrom-map chrom.txt --out 406cannabis.jc  命令中通过&ndash;chrom-map参数确定染色体编号，chrom.txt的格式参考vcftools https://vcftools.github.io/man_latest.html 官网，第一列为vcf文件中的染色体编号，第二列为染色体的序号，这里的染色体序号要跟给的格式一致，不能自己写chrxx，后面会识别不出来。两列之间用制表符分隔。
+#chrom.txt Chr01	1 Chr02	2 Chr03	3 Chr04	4 Chr05	5 这一步生成map文件和ped文件。map有四列，参考 https://zzz.bwh.harvard.edu/plink/data.shtml#map ped文件格式参考 https://zzz.bwh.harvard.edu/plink/data.shtml#ped。
+plink --file 406cannabis.jc --make-bed --noweb --out 406cannabis.jc  这一步生成bed bim fam nosex四个文件。https://zzz.bwh.harvard.edu/plink/data.shtml#bed bed是二进制文件，bed会将谱系/表型信息存储在fam文件中(fam其实就是前六列的ped)，还会生成一个包含等位基因名称的bim文件
+使用king计算样本的亲缘关系
+king主要有两种算法，一种是kinship,一种是ibdseg,这里主要介绍使用kingship计算亲缘关系，然后根据kinship的值区分关系等级
+king -b 406cannabis.jc.bed --kinship --prefix kinship --cpus 16  根据kinship.kin0文件中中最后一列kinship的值划分亲缘关系。kinship &gt;0."/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "https://blog.caiisen.top/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Wgs 3",
+      "item": "https://blog.caiisen.top/posts/wgs-3/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Wgs 3",
+  "name": "Wgs 3",
+  "description": "Pre-release! 在上一篇中，我们通过Sentieon得到了vcf文件，接下来要对vcf进行过滤，以适用不同的分析要求。首先是用于构建系统发生树的过滤流程\n进化树 King 亲缘关系判断 这一步在大多数植物群体分析的文章中并没有应用到，只是在一篇文章中偶然看到，抱着试试的心态看看结果，后来发现结果还不错，就保留了这个步骤。所以这一步是可选的。\nKing https://www.kingrelatedness.com/ 主要是在GWAS中用于推断亲缘关系的。在查找相关教程的时候看到有的说法是 由于亲缘关系较近的个体在后续的计算中会导致误差，例如群体历史推算和模拟等，因此需要删除一些亲缘关系较近的个体 https://github.com/shangshanzhizhe/Work_flow_of_population_genetics/blob/master/Work_flows/king.md 因此决定尝试一下。\nking查看亲缘关系,要先把vcf转成plink的格式\nKing的输入文件要求是PLINK的二进制文件，因此需要先将vcf转成plink的格式，主要有两个步骤，第一个是通过vcftools把vcf转成map和ped格式，第二个是通过plink生成bed bim fam 和 nosex\nvcftools --gzvcf ../../00.vcf/406cannabis.jc.vcf.gz --plink --chrom-map chrom.txt --out 406cannabis.jc  命令中通过\u0026ndash;chrom-map参数确定染色体编号，chrom.txt的格式参考vcftools https://vcftools.github.io/man_latest.html 官网，第一列为vcf文件中的染色体编号，第二列为染色体的序号，这里的染色体序号要跟给的格式一致，不能自己写chrxx，后面会识别不出来。两列之间用制表符分隔。\n#chrom.txt Chr01\t1 Chr02\t2 Chr03\t3 Chr04\t4 Chr05\t5 这一步生成map文件和ped文件。map有四列，参考 https://zzz.bwh.harvard.edu/plink/data.shtml#map ped文件格式参考 https://zzz.bwh.harvard.edu/plink/data.shtml#ped。\nplink --file 406cannabis.jc --make-bed --noweb --out 406cannabis.jc  这一步生成bed bim fam nosex四个文件。https://zzz.bwh.harvard.edu/plink/data.shtml#bed bed是二进制文件，bed会将谱系/表型信息存储在fam文件中(fam其实就是前六列的ped)，还会生成一个包含等位基因名称的bim文件\n使用king计算样本的亲缘关系\nking主要有两种算法，一种是kinship,一种是ibdseg,这里主要介绍使用kingship计算亲缘关系，然后根据kinship的值区分关系等级\nking -b 406cannabis.jc.bed --kinship --prefix kinship --cpus 16  根据kinship.kin0文件中中最后一列kinship的值划分亲缘关系。kinship \u0026gt;0.",
+  "keywords": [
+    
+  ],
+  "articleBody": "Pre-release! 在上一篇中，我们通过Sentieon得到了vcf文件，接下来要对vcf进行过滤，以适用不同的分析要求。首先是用于构建系统发生树的过滤流程\n进化树 King 亲缘关系判断 这一步在大多数植物群体分析的文章中并没有应用到，只是在一篇文章中偶然看到，抱着试试的心态看看结果，后来发现结果还不错，就保留了这个步骤。所以这一步是可选的。\nKing https://www.kingrelatedness.com/ 主要是在GWAS中用于推断亲缘关系的。在查找相关教程的时候看到有的说法是 由于亲缘关系较近的个体在后续的计算中会导致误差，例如群体历史推算和模拟等，因此需要删除一些亲缘关系较近的个体 https://github.com/shangshanzhizhe/Work_flow_of_population_genetics/blob/master/Work_flows/king.md 因此决定尝试一下。\nking查看亲缘关系,要先把vcf转成plink的格式\nKing的输入文件要求是PLINK的二进制文件，因此需要先将vcf转成plink的格式，主要有两个步骤，第一个是通过vcftools把vcf转成map和ped格式，第二个是通过plink生成bed bim fam 和 nosex\nvcftools --gzvcf ../../00.vcf/406cannabis.jc.vcf.gz --plink --chrom-map chrom.txt --out 406cannabis.jc  命令中通过–chrom-map参数确定染色体编号，chrom.txt的格式参考vcftools https://vcftools.github.io/man_latest.html 官网，第一列为vcf文件中的染色体编号，第二列为染色体的序号，这里的染色体序号要跟给的格式一致，不能自己写chrxx，后面会识别不出来。两列之间用制表符分隔。\n#chrom.txt Chr01\t1 Chr02\t2 Chr03\t3 Chr04\t4 Chr05\t5 这一步生成map文件和ped文件。map有四列，参考 https://zzz.bwh.harvard.edu/plink/data.shtml#map ped文件格式参考 https://zzz.bwh.harvard.edu/plink/data.shtml#ped。\nplink --file 406cannabis.jc --make-bed --noweb --out 406cannabis.jc  这一步生成bed bim fam nosex四个文件。https://zzz.bwh.harvard.edu/plink/data.shtml#bed bed是二进制文件，bed会将谱系/表型信息存储在fam文件中(fam其实就是前六列的ped)，还会生成一个包含等位基因名称的bim文件\n使用king计算样本的亲缘关系\nking主要有两种算法，一种是kinship,一种是ibdseg,这里主要介绍使用kingship计算亲缘关系，然后根据kinship的值区分关系等级\nking -b 406cannabis.jc.bed --kinship --prefix kinship --cpus 16  根据kinship.kin0文件中中最后一列kinship的值划分亲缘关系。kinship 0.354, [0.177, 0.354], [0.0884, 0.177], [0.0442, 0.0884] 分别对应duplicate/MZ twin, 1st-degree, 2nd-degree 和 3rd-degree。我们取2级以上的关系认为是亲缘关系很近的个体，摒弃。\n鉴定单拷贝基因 找单拷贝基因,必须用CDS\n这里采取的是用参考基因组CDS序列自己比对自己的方式鉴定单拷贝基因。以CDS序列构建blast数据库，然后自己比对回自己，在结果中挑选只能比对上自己的基因，就认为是单拷贝基因。\n构建blast库\nmakeblastdb -in modified.cds.fa -dbtype nucl -parse_seqids -out CsLZ.cds  自己比对上自己\nblastn -query modified.cds.fa -db CsLZ.cds -outfmt 6 -num_threads 128 -out blast.result  用脚本提取单拷贝基因的bed格式\nget_SCG_bed.py  vcftools过滤 本文过滤SNP的时候主要有几个参考标准：等位基因的数量、位点深度、质量、次等位基因频率MAF和缺失率（位点和个体）。由于原始vcf文件过大，在统计这些参数的时候都要跑很久或者占用大量内存，因此可以先过滤几个固定的参数，例如个体缺失率，MAF和等位基因的数量，再根据统计的结果过滤其余的参数。vcftools提供了–geno-depth –freq –counts –site-quality –missing-site –missing-indv等参数统计这些信息，这些参数不能一次性在一个命令中同时添加，需要分别提交，例如计算每个位点在每个样本中的深度\nvcftools --gzvcf ../../00.vcf/406cannabis.ht.vcf.gz --geno-depth  –freq 生成frq文件, N_ALLELES是等位基因的数量，是后续的–min-alleles和–max-alleles的判断标准。最后面是每个等位基因的频率。alleles的指定实际是看AC的数量（不是数值），当在ALT列有两种及以上的突变情况（即逗号分隔）时，alleles被认为大于2，这可能会被过滤掉\n–geno-depth生成gdepth文件，是每个位点在每个样本中的深度，与miss结合是–minDP和–maxDP的判断标准。对于深度的过滤，–minDP必须搭配–max-missing进行过滤。具体的操作逻辑是这样的，–max-missing指定允许出现的缺失（./.）比例，在非缺失样本中，每个样本的深度必须符合DP的取值范围。当–max-missing设置为0时，不会进行过滤，当不指定–max-missing时，–minDP将无效。–meanDP是不参与判断每个样本各自的深度的，只计算平均深度。假设有100个样品，你希望平均每个样品在2～3x那么应该设置–min-meanDP 200 –max-meanDP 300\n–missing-indv生成imiss文件，是每个样本在全部位点的缺失率，结合–remove过滤高缺失的样本 得到的out.imiss里面，找最后一列大于0.5的，剔除掉 awk ‘$5  0.5’ out.imiss | cut -f1  lowDP.indv #注意外类群要保留着,把亲缘关系近的也加进来 –missing-site生成lmiss文件，是每个位点在全部样本的缺失率，是–max-missing的判断标准\n–site-quality生成lqual文件，是每个位点的质量，对应vcf文件中的QUAL列，是–minQ的判断标准\n统计好各项指标之后可以对他们在snp中的分布情况绘制直方图，这样可以方便的确定参数的选择，之后便可以加上单靠本基因的bed文件进行过滤\nvcftools --gzvcf ../../00.vcf/406cannabis.ht.vcf.gz --remove lowDP.indv --bed ../../01.SCG/CsLZ.SCG.bed --max-alleles 2 --min-alleles 2 --maxDP 50 --minDP 7 --minQ 30 --max-missing 0.8 --maf 0.05 --recode --recode-INFO-all --stdout | bgzip -c  406cannabis.ht.DP7.mis8.vcf.gz  vcf转phy 使用vcf2phylip.py把vcf转换成phy文件\npython3 vcf2phylip.py --input ../02.filtsnp/haplotyper/406cannabis.ht.DP7.mis8.vcf.gz -f -n -r --output-folder ht/  ",
+  "wordCount" : "180",
+  "inLanguage": "en",
+  "datePublished": "2021-08-11T17:01:04+08:00",
+  "dateModified": "2021-08-11T17:01:04+08:00",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://blog.caiisen.top/posts/wgs-3/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Sen",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://blog.caiisen.top/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+<noscript>
+    <style type="text/css">
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: #1d1e20;
+                --entry: #2e2e33;
+                --primary: rgba(255, 255, 255, 0.84);
+                --secondary: rgba(255, 255, 255, 0.56);
+                --tertiary: rgba(255, 255, 255, 0.16);
+                --content: rgba(255, 255, 255, 0.74);
+                --hljs-bg: #2e2e33;
+                --code-bg: #37383e;
+                --border: #333;
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://blog.caiisen.top/" accesskey="h" title="Sen (Alt + H)">Sen</a>
+            <span class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </span>
+        </div>
+        <ul id="menu">
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title">
+      Wgs 3
+    </h1>
+    <div class="post-meta">August 11, 2021
+</div>
+  </header> 
+  <div class="post-content"><h1 id="pre-release"><em>Pre-release!</em><a hidden class="anchor" aria-hidden="true" href="#pre-release">#</a></h1>
+<p>在上一篇中，我们通过Sentieon得到了vcf文件，接下来要对vcf进行过滤，以适用不同的分析要求。首先是用于构建系统发生树的过滤流程</p>
+<h1 id="进化树">进化树<a hidden class="anchor" aria-hidden="true" href="#进化树">#</a></h1>
+<h2 id="king-亲缘关系判断">King 亲缘关系判断<a hidden class="anchor" aria-hidden="true" href="#king-亲缘关系判断">#</a></h2>
+<p>这一步在大多数植物群体分析的文章中并没有应用到，只是在一篇文章中偶然看到，抱着试试的心态看看结果，后来发现结果还不错，就保留了这个步骤。所以这一步是可选的。</p>
+<p>King <a href="https://www.kingrelatedness.com/">https://www.kingrelatedness.com/</a> 主要是在GWAS中用于推断亲缘关系的。在查找相关教程的时候看到有的说法是 由于亲缘关系较近的个体在后续的计算中会导致误差，例如群体历史推算和模拟等，因此需要删除一些亲缘关系较近的个体 <a href="https://github.com/shangshanzhizhe/Work_flow_of_population_genetics/blob/master/Work_flows/king.md">https://github.com/shangshanzhizhe/Work_flow_of_population_genetics/blob/master/Work_flows/king.md</a> 因此决定尝试一下。</p>
+<p><strong>king查看亲缘关系,要先把vcf转成plink的格式</strong></p>
+<p>King的输入文件要求是PLINK的二进制文件，因此需要先将vcf转成plink的格式，主要有两个步骤，第一个是通过vcftools把vcf转成map和ped格式，第二个是通过plink生成bed bim fam 和 nosex</p>
+<pre><code>vcftools --gzvcf ../../00.vcf/406cannabis.jc.vcf.gz --plink --chrom-map chrom.txt --out 406cannabis.jc
+</code></pre>
+<p>命令中通过&ndash;chrom-map参数确定染色体编号，chrom.txt的格式参考vcftools <a href="https://vcftools.github.io/man_latest.html">https://vcftools.github.io/man_latest.html</a> 官网，第一列为vcf文件中的染色体编号，第二列为染色体的序号，这里的染色体序号要跟给的格式一致，不能自己写chrxx，后面会识别不出来。两列之间用制表符分隔。</p>
+<pre><code>#chrom.txt
+Chr01	1
+Chr02	2
+Chr03	3
+Chr04	4
+Chr05	5
+</code></pre><p>这一步生成map文件和ped文件。map有四列，参考 <a href="https://zzz.bwh.harvard.edu/plink/data.shtml#map">https://zzz.bwh.harvard.edu/plink/data.shtml#map</a> ped文件格式参考 <a href="https://zzz.bwh.harvard.edu/plink/data.shtml#ped">https://zzz.bwh.harvard.edu/plink/data.shtml#ped</a>。</p>
+<pre><code>plink --file 406cannabis.jc --make-bed --noweb --out 406cannabis.jc
+</code></pre>
+<p>这一步生成bed bim fam nosex四个文件。https://zzz.bwh.harvard.edu/plink/data.shtml#bed bed是二进制文件，bed会将谱系/表型信息存储在fam文件中(fam其实就是前六列的ped)，还会生成一个包含等位基因名称的bim文件</p>
+<p><strong>使用king计算样本的亲缘关系</strong></p>
+<p>king主要有两种算法，一种是kinship,一种是ibdseg,这里主要介绍使用kingship计算亲缘关系，然后根据kinship的值区分关系等级</p>
+<pre><code>king -b 406cannabis.jc.bed --kinship --prefix kinship --cpus 16
+</code></pre>
+<p>根据kinship.kin0文件中中最后一列kinship的值划分亲缘关系。kinship &gt;0.354, [0.177, 0.354], [0.0884, 0.177], [0.0442, 0.0884] 分别对应duplicate/MZ twin, 1st-degree, 2nd-degree 和 3rd-degree。我们取2级以上的关系认为是亲缘关系很近的个体，摒弃。</p>
+<h2 id="鉴定单拷贝基因">鉴定单拷贝基因<a hidden class="anchor" aria-hidden="true" href="#鉴定单拷贝基因">#</a></h2>
+<p><strong>找单拷贝基因,必须用CDS</strong></p>
+<p>这里采取的是用参考基因组CDS序列自己比对自己的方式鉴定单拷贝基因。以CDS序列构建blast数据库，然后自己比对回自己，在结果中挑选只能比对上自己的基因，就认为是单拷贝基因。</p>
+<p>构建blast库</p>
+<pre><code>makeblastdb -in modified.cds.fa -dbtype nucl -parse_seqids -out CsLZ.cds
+</code></pre>
+<p>自己比对上自己</p>
+<pre><code>blastn -query modified.cds.fa -db CsLZ.cds -outfmt 6 -num_threads 128 -out blast.result
+</code></pre>
+<p>用脚本提取单拷贝基因的bed格式</p>
+<pre><code>get_SCG_bed.py
+</code></pre>
+<h2 id="vcftools过滤">vcftools过滤<a hidden class="anchor" aria-hidden="true" href="#vcftools过滤">#</a></h2>
+<p>本文过滤SNP的时候主要有几个参考标准：等位基因的数量、位点深度、质量、次等位基因频率MAF和缺失率（位点和个体）。由于原始vcf文件过大，在统计这些参数的时候都要跑很久或者占用大量内存，因此可以先过滤几个固定的参数，例如个体缺失率，MAF和等位基因的数量，再根据统计的结果过滤其余的参数。vcftools提供了&ndash;geno-depth &ndash;freq &ndash;counts &ndash;site-quality &ndash;missing-site &ndash;missing-indv等参数统计这些信息，这些参数不能一次性在一个命令中同时添加，需要分别提交，例如计算每个位点在每个样本中的深度</p>
+<pre><code>vcftools --gzvcf ../../00.vcf/406cannabis.ht.vcf.gz --geno-depth
+</code></pre>
+<p>&ndash;freq 生成frq文件, N_ALLELES是等位基因的数量，是后续的&ndash;min-alleles和&ndash;max-alleles的判断标准。最后面是每个等位基因的频率。alleles的指定实际是看AC的数量（不是数值），当在ALT列有两种及以上的突变情况（即逗号分隔）时，alleles被认为大于2，这可能会被过滤掉</p>
+<p>&ndash;geno-depth生成gdepth文件，是每个位点在每个样本中的深度，与miss结合是&ndash;minDP和&ndash;maxDP的判断标准。对于深度的过滤，&ndash;minDP必须搭配&ndash;max-missing进行过滤。具体的操作逻辑是这样的，&ndash;max-missing指定允许出现的缺失（./.）比例，在非缺失样本中，每个样本的深度必须符合DP的取值范围。当&ndash;max-missing设置为0时，不会进行过滤，当不指定&ndash;max-missing时，&ndash;minDP将无效。&ndash;meanDP是不参与判断每个样本各自的深度的，只计算平均深度。假设有100个样品，你希望平均每个样品在2～3x那么应该设置&ndash;min-meanDP 200 &ndash;max-meanDP 300</p>
+<p>&ndash;missing-indv生成imiss文件，是每个样本在全部位点的缺失率，结合&ndash;remove过滤高缺失的样本 得到的out.imiss里面，找最后一列大于0.5的，剔除掉 awk &lsquo;$5 &gt; 0.5&rsquo; out.imiss | cut -f1 &gt; lowDP.indv #注意外类群要保留着,把亲缘关系近的也加进来
+&ndash;missing-site生成lmiss文件，是每个位点在全部样本的缺失率，是&ndash;max-missing的判断标准</p>
+<p>&ndash;site-quality生成lqual文件，是每个位点的质量，对应vcf文件中的QUAL列，是&ndash;minQ的判断标准</p>
+<p>统计好各项指标之后可以对他们在snp中的分布情况绘制直方图，这样可以方便的确定参数的选择，之后便可以加上单靠本基因的bed文件进行过滤</p>
+<pre><code>vcftools --gzvcf ../../00.vcf/406cannabis.ht.vcf.gz --remove lowDP.indv --bed ../../01.SCG/CsLZ.SCG.bed --max-alleles 2 --min-alleles 2 --maxDP 50 --minDP 7 --minQ 30 --max-missing 0.8 --maf 0.05 --recode --recode-INFO-all --stdout | bgzip -c &gt; 406cannabis.ht.DP7.mis8.vcf.gz
+</code></pre>
+<h2 id="vcf转phy">vcf转phy<a hidden class="anchor" aria-hidden="true" href="#vcf转phy">#</a></h2>
+<p>使用vcf2phylip.py把vcf转换成phy文件</p>
+<pre><code>python3 vcf2phylip.py --input ../02.filtsnp/haplotyper/406cannabis.ht.DP7.mis8.vcf.gz -f -n -r --output-folder ht/
+</code></pre>
+
+
+  </div>
+  <footer class="post-footer">
+  </footer>
+</article>
+    </main>
+    <footer class="footer">
+    <span>&copy; 2021 <a href="https://blog.caiisen.top/">Sen</a></span>
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://git.io/hugopapermod" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)">
+    <button class="top-link" id="top-link" type="button" accesskey="g">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+            <path d="M12 6H0l6-6z" />
+        </svg>
+    </button>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+    menu.onscroll = function () {
+        localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>

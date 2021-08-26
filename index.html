@@ -128,6 +128,42 @@
 
 <article class="first-entry"> 
   <header class="entry-header">
+    <h2>Wgs 3</h2>
+  </header>
+  <section class="entry-content">
+    <p>Pre-release! 在上一篇中，我们通过Sentieon得到了vcf文件，接下来要对vcf进行过滤，以适用不同的分析要求。首先是用于构建系统发生树的过滤流程
+进化树 King 亲缘关系判断 这一步在大多数植物群体分析的文章中并没有应用到，只是在一篇文章中偶然看到，抱着试试的心态看看结果，后来发现结果还不错，就保留了这个步骤。所以这一步是可选的。
+King https://www.kingrelatedness.com/ 主要是在GWAS中用于推断亲缘关系的。在查找相关教程的时候看到有的说法是 由于亲缘关系较近的个体在后续的计算中会导致误差，例如群体历史推算和模拟等，因此需要删除一些亲缘关系较近的个体 https://github.com/shangshanzhizhe/Work_flow_of_population_genetics/blob/master/Work_flows/king.md 因此决定尝试一下。
+king查看亲缘关系,要先把vcf转成plink的格式
+King的输入文件要求是PLINK的二进制文件，因此需要先将vcf转成plink的格式，主要有两个步骤，第一个是通过vcftools把vcf转成map和ped格式，第二个是通过plink生成bed bim fam 和 nosex
+vcftools --gzvcf ../../00.vcf/406cannabis.jc.vcf.gz --plink --chrom-map chrom.txt --out 406cannabis.jc  命令中通过–chrom-map参数确定染色体编号，chrom.txt的格式参考vcftools https://vcftools.github.io/man_latest.html 官网，第一列为vcf文件中的染色体编号，第二列为染色体的序号，这里的染色体序号要跟给的格式一致，不能自己写chrxx，后面会识别不出来。两列之间用制表符分隔。
+#chrom.txt Chr01	1 Chr02	2 Chr03	3 Chr04	4 Chr05	5 这一步生成map文件和ped文件。map有四列，参考 https://zzz.bwh.harvard.edu/plink/data.shtml#map ped文件格式参考 https://zzz.bwh.harvard.edu/plink/data.shtml#ped。
+plink --file 406cannabis.jc --make-bed --noweb --out 406cannabis.jc  这一步生成bed bim fam nosex四个文件。https://zzz.bwh.harvard.edu/plink/data.shtml#bed bed是二进制文件，bed会将谱系/表型信息存储在fam文件中(fam其实就是前六列的ped)，还会生成一个包含等位基因名称的bim文件
+使用king计算样本的亲缘关系
+king主要有两种算法，一种是kinship,一种是ibdseg,这里主要介绍使用kingship计算亲缘关系，然后根据kinship的值区分关系等级
+king -b 406cannabis.jc.bed --kinship --prefix kinship --cpus 16  根据kinship.kin0文件中中最后一列kinship的值划分亲缘关系。kinship &gt;0....</p>
+  </section>
+  <footer class="entry-footer">August 11, 2021</footer>
+  <a class="entry-link" aria-label="post link to Wgs 3" href="https://blog.caiisen.top/posts/wgs-3/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2>WGS群体分析（一）call SNP</h2>
+  </header>
+  <section class="entry-content">
+    <p>Pre-release! 在上一篇中准备好了需要的二代测序数据，这篇就开始call SNP
+bwa比对 构建索引 在开始比对之前要先对参考基因组构建索引。需要使用到三个软件sentioen bwa（目前看来跟bwa本身没有太多区别），samtools和picard，这里主要介绍samtools和picar的安装。
+# samtools conda install -c bioconda samtools # picard wget https://github.com/broadinstitute/picard/releases/download/2.25.6/picard.jar java -jar picar.jar 构建索引的流程也很简单bwa index生成.amb，.ann，.bwt，.pac和.sa文件，samtools faidx生成.fai，picard CreateSequenceDictionary生成.dict
+sentieon bwa index ${GENOME} samtools faidx ${GENOME} java -jar picard.jar CreateSequenceDictionary REFERENCE=${GENOME} OUTPUT=${DICT} 比对与排序 这里将比对和排序两个步骤合并在一起执行。比对的部分还是使用的sentioen bwa，算法部分使用的是mem，-M
+( sentieon bwa mem -M -R &#34;@RG\tID:${RGID}\tSM:${SM}\tPL:${PL}&#34; -t ${NT} -K 10000000 ${GENOME} ${FQ1} ${FQ2} || echo -n &#39;error&#39; ) | sentieon util sort -r ${GENOME} -o ${SORTED.BAM} -t ${NT} --sam2bam -i -  统计信息 去除重复 Haplotyper </p>
+  </section>
+  <footer class="entry-footer">July 3, 2021</footer>
+  <a class="entry-link" aria-label="post link to WGS群体分析（一）call SNP" href="https://blog.caiisen.top/posts/wgs-2/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
     <h2>WGS群体分析（一）数据准备</h2>
   </header>
   <section class="entry-content">
@@ -163,6 +199,21 @@ hugo new post/POST_NAME.md  这样在content/post文件夹下就会生成一个.
   </section>
   <footer class="entry-footer">June 28, 2021</footer>
   <a class="entry-link" aria-label="post link to 搭建个人网站(一) Hugo" href="https://blog.caiisen.top/posts/build-site-1/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2>JCVI pipline</h2>
+  </header>
+  <section class="entry-content">
+    <p>Pre-release! Prepare input data 准备输入文件  GFF cds  Format 对输入文件进行统一的格式化 convert GFF to BED 将GFF格式转换成BED格式 python3 -m jcvi.formats.gff bed --type=mRNA --key=Parent JamaicanLionDASH.gene.gff3.gz -o CsJLD.bed  formatting cds sequences python3 -m jcvi.formats.fasta format JamaicanLionDASH.cds.fasta.gz CsJLD.cds  Pairwise synteny search 搜索共线性对 python3 -m jcvi.compara.catalog ortholog CsFN CsPK --no_strip_names  此步骤会调用LAST以CsPK为subject建库,以CsFN为query做blastp。结果文件中.last是比对的全部结果，.last.filtered是过滤后的结果，但过滤的规则尚不清楚。同时生成的.anchors和.lifted.anchors文件格式尚不清楚。生成的.pdf文件绘制了CsFN和CsPK的共线性点图。
+ 若杂点太多可以通过添加--cscore=.99参数修改last的C-score过滤阈值，在此之前需删除旧的.last.filtered文件。
+ Macrosynteny visualization 宏观共线性可视化 seqids and layout chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8 Pp01,Pp02,Pp03,Pp04,Pp05,Pp06,Pp07,Pp08  seqids文件是CsFN和CsPK中需要展示的染色体编号，编号的排列顺序与结果文件中染色体的排列顺序一致
+ 两个个体之间的染色体编号若有重复，可能导致在微观共线性可视化时产生错误。
+ # y, xstart, xend, rotation, color, label, va, bed ....</p>
+  </section>
+  <footer class="entry-footer">June 27, 2021</footer>
+  <a class="entry-link" aria-label="post link to JCVI pipline" href="https://blog.caiisen.top/posts/jcvi/"></a>
 </article>
     </main>
     <footer class="footer">
