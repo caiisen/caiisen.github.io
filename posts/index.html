@@ -139,14 +139,13 @@
     <p>背景 群体分析通过对多个个体进行重测序，可以发现不同个体中存在的变异，挖掘在驯化过程中收到选择的位点。目前网上大多的教程都是基于GATK进行的call SNP，但是GATK对多线程的支持很不友好，在GATK3中可以通过-nt和-ncr参数来进行多线程运算，在GATK4中已经取消了这些参数，虽然还是可以通过调整–native-pair-hmm-threads来加快核心计算程序，但是效果很不理想。相较之下Sentieon能提供更稳定更快的计算，因为是基于GATK的，结果也较为准确。Sentieon提供了很详细的帮助文档，我在此基础上记录下操作过程可供参考。
 这个系列大致分为三部分吧，第一部分是数据的准备，第二部分是call SNP，第三部分是其他下游分析。
 FastQC质控 测序公司在交付重测序原始数据的时候基本已经通过了质量控制，交付的是clean data，而且现在二代测序十分普及，流程很完善，基本可以直接使用公司提供的原始数据了。这一步主要是针对在NCBI上存储的其他研究测的数据，特别是早些年的数据质量参差不齐，需要自己质控一下。这里使用的软件是FastQC，可以通过conda直接安装。
-conda install fastqc  如果想一次对多个文件提交操作，可以使用下面的命令，此处-t设置线程数为108是因为有108个fq文件，每个文件使用一个线程并行计算。-o指定输出的文件路径，此文件夹需提前建立。
+conda install -c bioconda fastqc  如果想一次对多个文件提交操作，可以使用下面的命令，此处-t设置线程数为108是因为有108个fq文件，每个文件使用一个线程并行计算。-o指定输出的文件路径，此文件夹需提前建立。
 fastqc -t 108 -o fastqc/ *.gz  FastQC会为每个fq文件生成一份.html报告和一个.zip压缩包，在本地电脑浏览器打开.html文件就可以查看报告。但是如果文件数量太多一个一个看太不方便，可以使用MultiQC软件汇总结果，生成一份总的报告。MultiQC可以用过pip安装。
 pip3 install multiqc  直接提供fastqc的结果文件夹给MultiQC即可，它会检索文件夹里报告的数量，生成一份汇总报告。
 multiqc fastqc/  结果文件是一个.multiqc_report.html和一个multiqc_data文件夹，下载html文件在浏览器就可以打开查看报告了
 Trimmomatic过滤 对于原始数据质量不过关的文件，可以使用Trimmomatic进行过滤。主要的过滤目的有两个，一个是去除低质量的碱基，还有一个就是去除接头。Trimmomatic使用的是java，在官网下载解压就可以用。
 wget http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-0.39.zip unzip Trimmomatic-0.39.zip cd Trimmomatic-0.39 java -jar trimmomatic-0.39.jar  这里介绍使用的几个参数。PE是双端测序模式，如果是单端测序改成SE。-threads指定线程数量，我试过给一个比较大的数，但是cpu的使用率一直在300多一些，所以每个文件就指定了4个线程。后面的文件名顺序依次是原始fq1 原始fq2 过滤后fq1 过滤后未成对fq1 过滤后fq2 过滤后未成对fq2。ILLUMINACLIP指定接头文件的路径和匹配参数，这里的匹配参数具体意义还不明确，暂时使用陈连福老师教程里的数值。LEADING指定去除前端碱基质量值(Qscore)小于20的碱基。TRAILING指定去除末端碱基质量值(Qscore)小于20的碱基。SLIDINGWINDOW指定以4个碱基为一个窗口滑动，去除平均质量值小于25的碱基。MINLEN指定保留的最小读段长度。TOPHRED33将碱基质量值转换为phred33格式（原始就是phred33格式的话应该可以不加，但是暂时还是按照陈连福老师的教程加了）。
-java -jar ~/software/Trimmomatic-0.39/trimmomatic-0.39.jar PE -threads 4 ${RAW.1.FQ.GZ} ${RAW.2.FQ.GZ} ${CLEAN.1.FQ.GZ} ${UNPAIR.1.FQ.GZ} ${CLEAN.2.FQ.GZ} ${UNPAIR.2.FQ.GZ} ILLUMINACLIP:${ADEPTER.FA}:2:30:10 LEADING:20 TRAILING:20 SLIDINGWINDOW:4:25 MINLEN:50 TOPHRED33  对于多个文件都要过滤的话可以参考下面的脚本模板一次性提交
-java -jar ~/software/Trimmomatic-0....</p>
+java -jar ~/software/Trimmomatic-0.39/trimmomatic-0.39.jar PE -threads 4 ${RAW.1.FQ.GZ} ${RAW.2.FQ.GZ} ${CLEAN.1.FQ.GZ} ${UNPAIR.1.FQ.GZ} ${CLEAN.2.FQ.GZ} ${UNPAIR.2.FQ.GZ} ILLUMINACLIP:${ADEPTER.FA}:2:30:10 LEADING:20 TRAILING:20 SLIDINGWINDOW:4:25 MINLEN:50 TOPHRED33  对于多个文件都要过滤的话可以参考下面的脚本模板一次性提交...</p>
   </section>
   <footer class="entry-footer">June 30, 2021</footer>
   <a class="entry-link" aria-label="post link to WGS群体分析（一）数据准备" href="https://blog.caiisen.top/posts/wgs-1/"></a>
